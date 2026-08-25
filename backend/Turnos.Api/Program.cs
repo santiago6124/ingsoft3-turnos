@@ -1,3 +1,5 @@
+// Demostración del gate (TP4 §3.4): este using no existe y rompe la compilación.
+using NoExiste;
 using Microsoft.EntityFrameworkCore;
 using Turnos.Api.Data;
 using Turnos.Api.Options;

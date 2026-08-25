@@ -354,3 +354,106 @@ Cómo se verificó:
 Lo que se defiende en P1 no es haber reproducido el procedimiento: es poder explicar por qué el sprint
 dura dos semanas, por qué el límite es dos, por qué cada criterio de aceptación es verificable y por
 qué el bug no cuelga de la historia.
+
+---
+
+## TP4 — CI: Pipelines as Code
+
+### 1. Estructura elegida del pipeline
+
+**Dos jobs, `build-backend` y `build-frontend`, en paralelo.**
+
+Son dos porque la app tiene **dos artefactos independientes**, cada uno con su Dockerfile del TP2:
+la API en `./backend` y la SPA en `./frontend`. No es paralelismo decorativo — construir el backend
+no necesita nada de lo que produce el frontend, así que serializarlos sólo agregaría espera.
+
+Corren en **máquinas distintas**: cada job arranca en un runner limpio. Eso significa que **no
+comparten nada** — ni disco, ni contenedores, ni variables, ni el resultado del `checkout`. Cada uno
+vuelve a clonar el repo. Es la razón por la que cada job repite el `checkout` y el `setup-buildx`, y
+la razón por la que necesitan `scope` separados en el cache (ver abajo).
+
+**Los disparadores** son dos y hacen cosas distintas:
+
+| Trigger | Para qué |
+|---|---|
+| `pull_request: branches: [main]` | El que hace el trabajo: verifica **antes** del merge, y es el que el gate exige |
+| `push: branches: [main]` | Le da al badge una corrida de `main` de la cual leer el estado, y deja el cache guardado en la rama base para que los PRs siguientes lo aprovechen en su primera corrida |
+
+Sin el de `push`, el badge no tendría estado y cada PR nuevo construiría de cero.
+
+### 2. Qué cachea el pipeline, y qué pasa si el cache desaparece
+
+Cachea **las capas de las imágenes Docker**, en el almacén de GitHub Actions (`type=gha`) — no en el
+Docker de mi máquina ni en el del runner, que nace vacío en cada corrida. `mode=max` guarda también
+las capas **intermedias** (las de la etapa de build del multi-stage), no sólo las de la imagen final:
+con el default (`min`) se reutilizaría mucho menos.
+
+Qué se reutiliza y qué no lo decide **cómo está escrito el Dockerfile del TP2**, que copia primero los
+archivos de dependencias y después el código:
+
+| Se reutiliza | Se rehace |
+|---|---|
+| `FROM` de las imágenes base (`sdk:8.0`, `aspnet:8.0`, `node:20-alpine`, `nginx:alpine`) | El `COPY . .` del código, en cuanto cambia cualquier archivo fuente |
+| `COPY` de los `.csproj`/`.sln` y `package*.json`, mientras no cambien | El `dotnet publish` / `npm run build`, que dependen del código |
+| `dotnet restore` y `npm ci` — las capas caras, las que bajan paquetes de la red | |
+
+Cada job tiene su propio `scope` (`scope=backend` / `scope=frontend`). **No es opcional**: sin él los
+dos usan el estante por defecto y **se pisan** — el último en terminar sobreescribe el cache del otro,
+y lo que se ve es que un job reutiliza capas y el otro no, alternándose de corrida en corrida sin
+patrón aparente. No da ningún error; sólo resultados desconcertantes.
+
+**Si el cache desaparece, el pipeline funciona exactamente igual, sólo que más lento.** GitHub lo
+desaloja cuando quiere (tiene límite de tamaño y expiración por inactividad), así que esa propiedad no
+es opcional: un pipeline que **falla** sin cache no tiene un cache, tiene una **dependencia escondida**
+— está usando como insumo algo que debería producir, y eso es un bug esperando a que el almacén se
+vacíe. Acá el cache sólo evita rehacer trabajo: cada corrida podría construir todo de cero y llegar al
+mismo resultado.
+
+### 3. Por qué el pipeline construye con el Dockerfile en vez de compilar por su cuenta
+
+Porque si el pipeline compilara con `dotnet build` y `npm run build` por su lado, habría **dos
+definiciones de build**: la del workflow y la del Dockerfile. Tarde o temprano divergen —alguien
+cambia una versión de SDK, agrega una variable, cambia un flag de publicación en una sola de las dos—
+y a partir de ese momento el pipeline estaría verificando **una compilación distinta de la que después
+se despliega**. El caso feo no es que falle: es que dé verde sobre algo que en producción no anda.
+
+Construyendo con el Dockerfile hay **una sola definición**, la misma que corrió en mi máquina en el
+TP2 y la misma que el TP6 va a desplegar y el TP7 va a publicar como release inmutable.
+
+Un efecto secundario que vale la pena notar: el workflow **no tiene una sola línea de .NET ni de
+Node**. No sabe qué hay adentro de la imagen. Ese mismo archivo le sirve a cualquier compañero, sea
+cual sea su stack — lo que cambia es el Dockerfile.
+
+### 4. Problemas encontrados y cómo se resolvieron
+
+- **Las versiones de las actions del enunciado no coinciden con las publicadas.** La guía usa
+  `actions/checkout@v6`, `docker/setup-buildx-action@v4` y `docker/build-push-action@v7`. Se verificó
+  antes de escribir el workflow y las versiones mayores realmente publicadas son **v4**, **v3** y
+  **v6**: pedir una etiqueta inexistente hace fallar la corrida antes de ejecutar nada
+  (`Unable to resolve action ..., repository or version not found`), así que se usaron las reales y la
+  primera corrida salió en verde. Fijar la versión mayor —y no `@main`— es deliberado: sin fijarla, el
+  pipeline cambiaría solo el día que los autores de la action publiquen algo.
+- **Para ver `CACHED` hacen falta dos corridas separadas, no dos pushes seguidos.** El cache se sube
+  **al terminar** la corrida, así que si se pushea dos veces seguidas las corridas se solapan y la
+  segunda empieza a construir cuando la primera todavía no guardó nada. Se esperó a que la primera
+  terminara y recién entonces se disparó la segunda con un commit vacío
+  (`git commit --allow-empty`). Además las dos tienen que ser del **mismo PR**: una corrida sólo puede
+  restaurar cache de su propia rama o de la rama base, y `main` todavía no había guardado ninguno.
+- **`mergeable: UNKNOWN` al consultar el estado del PR.** Igual que en el TP1: GitHub recalcula el
+  estado de forma asíncrona. Se resolvió consultando en bucle hasta obtener un valor definitivo.
+
+### 5. Declaración de uso de IA
+
+**Todo el TP4 fue ejecutado con asistencia de IA** (Claude Code, modelo Claude Fable 5) bajo mi
+indicación: la escritura del workflow, la configuración del gate por API, la demostración de la
+rotura del build, el badge y la redacción de este archivo.
+
+Cómo se verificó:
+- **Las corridas se miraron de verdad**, no se asumieron: la primera construyendo de cero, la segunda
+  con `CACHED` en el log, y la del PR roto fallando en el paso de build con el error del compilador.
+- **El gate se comprobó sobre un PR real**: con el build en rojo, la API devuelve el PR como
+  bloqueado; después del fix, los dos checks en verde y el merge habilitado. La secuencia completa
+  está en el PR de la demostración.
+- **La protección se leyó después de escribirla** (`gh api .../branches/main/protection`), porque el
+  `PUT` **reescribe la protección entera** en vez de agregarle una línea: había que confirmar que lo
+  configurado en el TP1 (cero aprobaciones y `enforce_admins`) siguiera en pie.

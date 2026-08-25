@@ -219,3 +219,112 @@ unauthorized
 > el cambio de visibilidad no se puede hacer por API (`PATCH /user/packages/container/{name}` devuelve
 > 404). Queda como evidencia de por qué el paso manual en *Package settings → Change visibility* es
 > necesario; una vez hecho, el mismo `docker pull` sin credenciales funciona.
+
+---
+
+## TP4 — CI: Pipelines as Code
+
+> 📌 El enunciado del TP4 **no pide `evidencias.md`**: el repositorio es público y todo esto se ve
+> en vivo en la pestaña *Actions* y en los Pull Requests. Se deja acá el resumen con los enlaces
+> exactos para no tener que buscarlos durante la defensa.
+
+### Dónde mirar cada cosa
+
+| Qué | Dónde |
+|---|---|
+| Las corridas del pipeline | [Actions → CI](https://github.com/santiago6124/ingsoft3-turnos/actions/workflows/ci.yml) |
+| Los dos jobs en paralelo y el cache | [PR #12](https://github.com/santiago6124/ingsoft3-turnos/pull/12) — dos corridas del mismo PR |
+| El gate bloqueando un merge | [PR #14](https://github.com/santiago6124/ingsoft3-turnos/pull/14) — rojo → fix → verde → merge |
+| `strict` / *Require branches to be up to date* | [PR #15](https://github.com/santiago6124/ingsoft3-turnos/pull/15) — quedó `BEHIND` al mergear el #14 |
+| El badge | arriba de todo en el [README](https://github.com/santiago6124/ingsoft3-turnos#readme) |
+
+### 1. El cache de capas reutilizándose
+
+Primera corrida construyendo de cero; segunda corrida del **mismo PR** (commit vacío, esperando a que
+la primera terminara de subir el cache) reutilizando capas:
+
+```
+# Corrida 1 — construye todo de cero
+  build-frontend: success
+  build-backend: success
+# Corrida 2 — mismo PR, commit vacío: reutiliza capas
+  build-frontend: success
+  build-backend: success
+
+$ gh run view 32909339886 --log | grep CACHED
+build-frontend Construir la imagen del frontend | #11 CACHED
+build-frontend Construir la imagen del frontend | #12 CACHED
+build-frontend Construir la imagen del frontend | #13 CACHED
+build-frontend Construir la imagen del frontend | #14 CACHED
+build-frontend Construir la imagen del frontend | #15 CACHED
+build-frontend Construir la imagen del frontend | #16 CACHED
+build-frontend Construir la imagen del frontend | #17 CACHED
+build-backend Construir la imagen del backend | #9 CACHED
+build-backend Construir la imagen del backend | #10 CACHED
+build-backend Construir la imagen del backend | #11 CACHED
+build-backend Construir la imagen del backend | #12 CACHED
+build-backend Construir la imagen del backend | #13 CACHED
+build-backend Construir la imagen del backend | #14 CACHED
+build-backend Construir la imagen del backend | #15 CACHED
+build-backend Construir la imagen del backend | #16 CACHED
+build-backend Construir la imagen del backend | #17 CACHED
+```
+
+**16 capas reutilizadas**: 9 en el backend y 7 en el frontend. Son las capas caras — las imágenes
+base, el `COPY` de los `.csproj`/`package*.json` y el `dotnet restore`/`npm ci` — porque el
+Dockerfile del TP2 copia las dependencias antes que el código.
+
+Y el efecto se ve también entre PRs distintos: después de mergear, la corrida de `push` a `main`
+dejó el cache en la rama base, así que el PR #14 construyó el frontend en **20 segundos** contra los
+39 de la primera corrida de todas.
+
+### 2. El gate actuando: rojo → bloqueado → fix → verde → merge
+
+```
+### 1. El gate bloqueando el merge — PR #14 con el build roto
+
+$ gh pr checks 14
+build-backend    fail   39s
+build-frontend   pass   20s
+
+$ gh pr view 14 --json mergeable,mergeStateStatus
+{"mergeStateStatus":"BLOCKED","mergeable":"MERGEABLE"}
+
+# mergeable=MERGEABLE (no hay conflicto de contenido) pero BLOCKED: lo frena el check en rojo.
+# Alcanza con UNO de los dos checks requeridos fallando, aunque el otro esté en verde.
+
+# El error, en el log del job que falló:
+#15 2.846 /src/Turnos.Api/Program.cs(2,7): error CS0246: The type or namespace name 'NoExiste' could not be found (are you missing a using directive or an assembly reference?) [/src/Turnos.Api/Turnos.Api.csproj]
+2.846 /src/Turnos.Api/Program.cs(2,7): error CS0246: The type or namespace name 'NoExiste' could not be found (are you missing a using directive or an assembly reference?) [/src/Turnos.Api/Turnos.Api.csproj]
+
+$ gh api ".../branches/main/protection"   # las condiciones que exige main hoy
+{"alcanza_a_admins":true,"aprobaciones":0,"checks_requeridos":["build-backend","build-frontend"],"pull_request_obligatorio":true,"rama_actualizada_strict":true}
+
+### 2. Tras el fix: los dos checks en verde y el merge habilitado
+
+$ gh pr checks 14
+build-backend    pass   14s
+build-frontend   pass   12s
+
+$ gh pr view 14 --json mergeable,mergeStateStatus
+{"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}
+
+### 3. `strict: true` — Require branches to be up to date
+
+# Al mergear el #14, main avanzó. El PR #15 tenía sus dos checks en verde,
+# pero ese verde se sacó contra un main que ya no existe:
+
+$ gh pr view 15 --json mergeStateStatus,mergeable
+{"mergeStateStatus":"BEHIND","mergeable":"MERGEABLE"}
+
+# BEHIND = la rama quedó atrás de main. GitHub muestra el botón "Update branch"
+# y no deja mergear hasta que el pipeline vuelva a correr sobre la MEZCLA.
+# Esto sólo se puede ver con dos Pull Requests abiertos al mismo tiempo.
+
+# Después de apretar "Update branch", el pipeline corre sobre la MEZCLA y recién ahí destraba:
+$ gh pr checks 15
+build-backend    pass   18s
+build-frontend   pass   16s
+$ gh pr view 15 --json mergeStateStatus
+{"mergeStateStatus":"CLEAN"}
+```

@@ -85,3 +85,167 @@ Cómo se verificó lo que la IA hizo:
 Lo que se defiende en P1 no es el procedimiento sino su comprensión: qué protege la regla de
 `main`, por qué el autor no puede aprobar su propio PR, qué es una rama para Git, por qué el merge
 de tres vías se detuvo, y qué significa `v1.0.0` en semver.
+
+---
+
+## TP2 — Contenedores: la app del semestre
+
+### 1. Qué app elegí y por qué
+
+**Sistema de turnos** (trámites de la Dirección Nacional de Migraciones), adaptada de
+[`valselviz/turnos-system`](https://github.com/valselviz/turnos-system): ASP.NET Core 8 + React 18/Vite +
+PostgreSQL 16. Contra los cinco criterios de [`elegir-app.md`](https://github.com/ingsoft3ucc/TPs_2026/blob/main/elegir-app.md):
+
+1. **Corre hoy.** Se clonó y se levantó completa antes de comprometerse. Requirió instalar el SDK de
+   .NET 8 y Docker (ver más abajo), no tocar el código para que arrancara.
+2. **Sé con qué se compila.** `dotnet publish` para el back y `npm run build` (Vite) para el front —
+   que es exactamente lo que hay que escribir en un Dockerfile.
+3. **La conexión a la base es parametrizable por variable de entorno sin tocar código.** Está en
+   `backend/Turnos.Api/appsettings.json` bajo `ConnectionStrings:AppointmentsDb`, y .NET la pisa con
+   `ConnectionStrings__AppointmentsDb` (el doble guión bajo anida claves). Es el criterio que más
+   pesa: en este TP la misma app apunta a `localhost` en desarrollo y a `db` dentro de compose, y en
+   el TP6 va a apuntar a la base de QA y a la de PROD **sin recompilar la imagen**.
+4. **Tiene reglas de negocio de verdad, no solo ABM.** Cuatro, documentadas en el README: turno único
+   confirmado por slot+trámite, cancelación solo desde pendiente/confirmado, fecha futura obligatoria,
+   y slots válidos (L-V, 09:00–16:00, cada 15 min, configurables). Alcanzan de sobra para los 8 tests
+   de backend del TP5 — de hecho el repo ya trae **18 tests xUnit** que pasan. En el frontend hay
+   validación de formulario y cálculo de slots disponibles para los 4 tests que pide el TP5.
+5. **La entiendo lo suficiente para modificarla.** En este mismo TP se le cambiaron las rutas de los
+   controllers, se le agregó el endpoint `/health` y se cambió el modo en que el front resuelve la URL
+   de la API (ver abajo).
+
+**Tamaño**: chica a propósito — una entidad (`Appointment`), dos controllers, dos vistas. La guía
+recomienda dos o tres pantallas: más grande solo significa builds más lentos y más puntos de falla.
+
+**Qué le cambié al repo original** (y por qué, porque esto se defiende):
+
+- **Rutas bajo `/api`**: los controllers eran `[Route("turnos")]` y `[Route("available-slots")]`.
+  Pasaron a `api/turnos` y `api/available-slots` para que nginx pueda proxear un único prefijo `/api`
+  al backend. Sin esto habría que listar cada ruta en el `nginx.conf`.
+- **El frontend ahora usa una ruta relativa.** `src/api.ts` tenía
+  `VITE_API_URL || 'http://localhost:5080'`: una URL absoluta horneada en el bundle, que obliga a
+  reconstruir la imagen para cambiar de entorno y además genera CORS. Ahora el default es `/api`, que
+  en desarrollo resuelve el proxy de Vite (`vite.config.ts`) y en el contenedor resuelve nginx. La
+  imagen del front pasa a ser la misma para cualquier entorno — que es el punto del TP7.
+- **Endpoint `/health`** en `Program.cs`: lo usan el healthcheck, el pipeline del TP4 y el monitoreo
+  del TP9.
+- **Swagger siempre activo**, no solo en `Development`: el compose original forzaba
+  `ASPNETCORE_ENVIRONMENT=Development` solo para no perder Swagger, lo que también activa páginas de
+  error con stack traces. Se prefirió dejar el entorno en su default (`Production`) y exponer Swagger
+  explícitamente.
+- **Se agregó `backend/Turnos.sln`**: la solución no estaba versionada, y el Dockerfile la necesita
+  para copiar los `.csproj` antes del `restore` (la capa cacheable).
+- **Se descartaron los Dockerfiles y el compose del repo original**, que existían pero no cumplían el
+  contrato del TP: las credenciales de la base estaban escritas en el `docker-compose.yml`, no había
+  `.env`/`.env.example`, no había `docker-compose.registry.yml` y el `nginx.conf` no proxeaba `/api`.
+
+### 2. Decisiones de contenerización
+
+**Imágenes base y multi-stage.** Los dos Dockerfiles tienen dos etapas, y la razón es la misma en
+ambos: **lo que hace falta para construir no hace falta para ejecutar**.
+
+| | Etapa de build | Etapa final | Tamaño |
+|---|---|---|---|
+| Backend | `mcr.microsoft.com/dotnet/sdk:8.0` (**1.25 GB**) | `mcr.microsoft.com/dotnet/aspnet:8.0` | **363 MB** |
+| Frontend | `node:20-alpine` (**194 MB**) | `nginx:alpine` | **93 MB** |
+
+El backend final pesa **3,4 veces menos** que la imagen que lo compiló: la final no lleva el
+compilador, ni el SDK, ni el código fuente, ni los paquetes de NuGet — solo el `publish` y el runtime.
+En el frontend la diferencia es aún más marcada en naturaleza: la imagen final **no tiene Node**, solo
+nginx y un puñado de archivos estáticos. Menos superficie es menos peso y también menos vulnerabilidades
+(lo vamos a medir en el TP9).
+
+**El orden de las instrucciones no es estético, es el cache.** En los dos Dockerfiles se copian primero
+los archivos de dependencias (`*.csproj` + `.sln`, `package*.json`) y se corre el `restore`/`npm ci`
+**antes** de copiar el código. Así la capa de dependencias solo se rehace cuando cambian esos archivos:
+un cambio de código no vuelve a bajar todos los paquetes. Es la misma propiedad que el TP4 explota en el
+pipeline con `cache-from`/`cache-to`.
+
+**`npm ci` y no `npm install`**: `ci` respeta el `package-lock.json` al pie de la letra y falla si está
+desincronizado; `install` puede resolver versiones distintas y hacer que la imagen no sea reproducible.
+
+**Dos `.dockerignore`, no uno.** Docker busca el archivo en la carpeta que se le pasa como contexto, y
+acá hay dos contextos (`./backend` y `./frontend`). El del backend usa `**/bin/` y `**/obj/` con
+asteriscos porque los artefactos están dentro de cada proyecto (`Turnos.Api/obj`), no en la raíz del
+contexto; sin eso, el `COPY . .` mete el `obj/project.assets.json` generado en mi Mac —con rutas
+absolutas mías— y pisa el que acaba de generar el `restore` de Linux. El del frontend excluye
+`node_modules/` por una razón análoga: los binarios de Vite/esbuild son por plataforma, y copiar los de
+macOS encima de los que instaló `npm ci` para Linux rompe el build.
+
+**Qué persiste y qué no.** Solo la base de datos, en el volumen nombrado `db_data` montado en
+`/var/lib/postgresql/data`. Los contenedores de backend y frontend son **descartables**: no guardan
+estado, se pueden borrar y recrear sin perder nada. Por eso `docker compose down` conserva los datos
+(borra contenedores, no volúmenes) y `docker compose down -v` los borra. Se eligió volumen nombrado y
+no bind mount porque en macOS el directorio de datos de PostgreSQL sobre una carpeta del host pasa por
+la VM de Docker: es más lento y trae problemas de permisos.
+
+**`depends_on` con `condition: service_healthy`, no `depends_on` a secas.** `depends_on` solo garantiza
+que el contenedor de la base **arrancó**, no que PostgreSQL esté aceptando conexiones — y el backend
+aplica migraciones de EF Core en el arranque, así que si sale primero se muere con
+`Failed to connect`. El `healthcheck` con `pg_isready` es lo que convierte "arrancó" en "está listo".
+
+**El secreto por variable de entorno.** La contraseña de la base está en `.env` (ignorado por git) y el
+repositorio solo lleva `.env.example`. Por eso el arranque documentado en el README son **dos** comandos
+y no uno: `cp .env.example .env` y después `docker compose up -d`. En el TP4 esa variable pasa a ser un
+secreto del repositorio, y en el TP6 una del entorno.
+
+**El `nginx.conf` con el upstream en una variable.** `set $backend_api http://backend:8080;` +
+`proxy_pass $backend_api;` en vez de escribir el nombre directo. Con el nombre directo, nginx resuelve el
+DNS **al arrancar**, y si el contenedor `backend` todavía no existe se niega a levantar con
+`host not found in upstream`. Con variable resuelve recién cuando llega un pedido, así que el frontend
+puede arrancar solo. El `proxy_pass` va **sin barra final** a propósito: con barra, nginx reescribe el
+prefijo y `/api/turnos` llegaría como `/turnos` al backend.
+
+**Registry: ghcr.io.** Se eligió sobre Docker Hub porque la cuenta ya existe (es la del TP1), las
+imágenes quedan junto al código, y en el TP7 el pipeline se va a poder autenticar contra ghcr con el
+`GITHUB_TOKEN` del propio workflow, sin guardar ningún secreto. Ambas imágenes llevan
+`LABEL org.opencontainers.image.source` apuntando a este repositorio para que queden enlazadas.
+
+**⚠️ Arquitectura**: las imágenes `v0.1.0` se construyeron en una Mac con chip Apple, así que son
+`linux/arm64`. En una máquina x86 el `pull` falla con `no matching manifest for linux/amd64`, y los
+runners de GitHub Actions son x86 — por eso el pipeline del TP4 construye sus propias imágenes en el
+runner en vez de bajar éstas. El build multi-arquitectura con `docker buildx` es tema del TP7.
+
+### 3. Problemas encontrados y cómo se resolvieron
+
+- **`global.json` fijaba un SDK que no tengo.** El repo original traía `"version": "8.0.422"`, y el SDK
+  instalado por Homebrew es 8.0.130. `dotnet` se niega a hacer nada —ni siquiera `dotnet new`— con un
+  mensaje que enumera los SDK instalados. Se bajó el piso a `8.0.100` dejando
+  `"rollForward": "latestFeature"`, que acepta cualquier 8.0.x posterior. Mantener el archivo tiene
+  sentido: fija la major/minor para que el pipeline y mi máquina compilen con la misma.
+- **Heredocs escritos en el directorio equivocado.** Un `cd` dentro de un script hizo que varios
+  archivos (`Dockerfile`, `nginx.conf`, `docker-compose.yml`) se intentaran crear con rutas relativas
+  desde `backend/`, que no existían. Se detectó por los `no such file or directory` y se rehizo usando
+  rutas absolutas. Anecdótico, pero es exactamente el tipo de error que en un pipeline se manifiesta
+  como "anda en mi máquina y no en el runner".
+- **Los packages de ghcr nacen privados y la API no permite cambiarlo.** `docker push` funciona y el
+  package aparece, pero `docker pull` sin credenciales devuelve `unauthorized` (queda registrado en
+  `evidencias.md`). El endpoint `PATCH /user/packages/container/{name}` devuelve **404**: GitHub no
+  expone el cambio de visibilidad por API, hay que hacerlo desde
+  *perfil → Packages → el package → Package settings → Change visibility → Public*. Es el tropiezo
+  más común de esta sección y no hay forma de scriptearlo.
+- **La máquina no tenía Docker ni .NET** (ver TP1). Se resolvió con `colima` en lugar de Docker
+  Desktop: `brew install colima docker docker-compose docker-buildx`, `colima start`. Es un demonio de
+  Docker corriendo en una VM Linux, sin interfaz gráfica ni licencia comercial. Todo lo que pide la
+  materia (`docker build`, `docker compose`, buildx, registry) funciona igual.
+
+### 4. Declaración de uso de IA
+
+**Todo el TP2 fue ejecutado con asistencia de IA** (Claude Code, modelo Claude Fable 5), bajo mi
+indicación: la búsqueda y evaluación de la app contra los cinco criterios, los dos Dockerfiles, los dos
+`.dockerignore`, el `nginx.conf`, los dos compose, el `.env.example`, las adaptaciones al código de la
+app, el README de arranque y este archivo.
+
+Cómo se verificó:
+- **El sistema se levantó de verdad y se probó end-to-end**: `docker compose up -d --build`, la SPA
+  responde en el 3000, `/api` proxeado por nginx llega al backend, se creó y confirmó un turno, y se
+  comprobaron dos reglas de negocio (409 por slot ocupado, 400 por día no hábil). Todo está en
+  `evidencias.md` con la salida real.
+- **La prueba de persistencia se corrió completa**: `down` → los datos siguen; `down -v` → la base
+  vuelve vacía.
+- **El compose del registry se probó de verdad**, borrando antes las imágenes locales y el cache de
+  construcción (`--rmi local`, `docker rmi`, `docker builder prune -af`) para que la descarga fuera real
+  y no un `Already exists`.
+- **Los 18 tests del backend pasan** (`dotnet test`), lo que confirma que las adaptaciones al código no
+  rompieron nada.
+- Los tamaños de imagen que aparecen arriba salen de `docker images`, no de una estimación.

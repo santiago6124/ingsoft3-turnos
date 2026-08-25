@@ -14,3 +14,15 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+
+# .NET (backend)
+**/bin/
+**/obj/
+**/TestResults/
+*.user
+.vs/
+
+# Node / Vite (frontend)
+*.tsbuildinfo
+*.timestamp-*.mjs
+npm-debug.log*

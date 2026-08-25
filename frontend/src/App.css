@@ -1,0 +1,379 @@
+:root {
+  --azul-gobierno: #0a3d62;
+  --azul-oscuro: #06283d;
+  --gris-fondo: #fafbfc;
+  --gris-borde: #e5e8ec;
+  --texto: #1f2430;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--gris-fondo);
+  color: var(--texto);
+}
+
+/* Header: full width, with an inner container centered (the same pattern
+   used by .gub.uy sites: edge-to-edge color bar, content aligned to a
+   central column). */
+.site-header {
+  background: var(--azul-gobierno);
+  color: white;
+}
+
+.site-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.site-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #cfe0ee;
+}
+
+.site-header-brand h1 {
+  margin: 2px 0 0;
+  font-size: 1.3rem;
+  color: white;
+}
+
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gub-badge {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: white;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.page-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.appointment-form, .appointment-list, .appointment-confirmation {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid var(--gris-borde);
+}
+
+.appointment-form, .appointment-confirmation {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.appointment-form h2, .appointment-list h2, .appointment-confirmation h2 {
+  color: var(--azul-gobierno);
+  margin-top: 0;
+}
+
+.appointment-confirmation dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 16px 0;
+}
+
+.appointment-confirmation dt {
+  font-weight: 600;
+  color: #555;
+}
+
+.appointment-confirmation dd {
+  margin: 0;
+}
+
+.appointment-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.appointment-form input, .appointment-form select {
+  display: block;
+  width: 100%;
+  height: 38px;
+  padding: 6px 8px;
+  margin-top: 4px;
+  border: 1px solid #c7d0da;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.appointment-form input:focus, .appointment-form select:focus {
+  outline: 2px solid var(--azul-gobierno);
+  outline-offset: 1px;
+}
+
+.appointment-form button, .appointment-list button, .appointment-confirmation button, .services-menu button {
+  cursor: pointer;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  background: var(--azul-gobierno);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.appointment-form button:hover, .appointment-list button:hover, .appointment-confirmation button:hover, .services-menu button:hover {
+  background: var(--azul-oscuro);
+}
+
+.appointment-form button:disabled, .appointment-list button:disabled {
+  background: #a8b0c0;
+  cursor: not-allowed;
+}
+
+.form-submit-button {
+  height: 42px;
+  width: 100%;
+}
+
+.fixed-service {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.link-button.back-to-menu {
+  display: inline-block;
+  color: var(--azul-gobierno);
+  margin-bottom: 12px;
+}
+
+.services-menu h2 {
+  color: var(--azul-gobierno);
+}
+
+.services-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.service-menu-item {
+  background: white;
+  border: 1px solid var(--gris-borde);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.service-menu-item h3 {
+  margin: 0 0 4px;
+  color: var(--azul-gobierno);
+  font-size: 1.05rem;
+}
+
+.service-menu-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.service-menu-item button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .service-menu-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.appointment-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.appointment-list-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.appointment-list-filters input,
+.appointment-list-filters select {
+  width: 160px;
+  padding: 6px 8px;
+  border: 1px solid var(--gris-borde);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 2px solid var(--azul-gobierno);
+  font-size: 0.85rem;
+  color: var(--azul-gobierno);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.actions button {
+  margin-right: 6px;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: white;
+}
+
+.badge-pending { background: #d97706; }
+.badge-confirmed { background: #16a34a; }
+.badge-cancelled { background: #dc2626; }
+
+.error {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+.global-error {
+  background: #fee2e2;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+@media (max-width: 700px) {
+  .site-header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-content {
+    padding: 16px;
+  }
+
+  .appointment-form, .appointment-list, .appointment-confirmation {
+    padding: 16px;
+  }
+
+  /* Admin table -> stacked cards. Each <tr> becomes a card; each <td> shows
+     its column label (via data-label) on the left and the value on the
+     right, instead of horizontal columns that don't fit on a narrow
+     screen. */
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  thead {
+    position: absolute;
+    left: -9999px;
+  }
+
+  table {
+    margin-top: 16px;
+  }
+
+  tbody tr {
+    background: white;
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f2f4;
+    text-align: right;
+  }
+
+  td:last-child {
+    border-bottom: none;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--azul-gobierno);
+    text-align: left;
+  }
+
+  td.actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  td.actions::before {
+    text-align: left;
+    margin-bottom: 4px;
+  }
+
+  .actions button {
+    margin-right: 0;
+    width: 100%;
+  }
+}

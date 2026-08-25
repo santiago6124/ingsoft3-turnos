@@ -249,3 +249,108 @@ Cómo se verificó:
 - **Los 18 tests del backend pasan** (`dotnet test`), lo que confirma que las adaptaciones al código no
   rompieron nada.
 - Los tamaños de imagen que aparecen arriba salen de `docker images`, no de una estimación.
+
+---
+
+## TP3 — Planificación y trazabilidad
+
+### 1. Duración del sprint y por qué
+
+**Dos semanas.**
+
+El calendario de la materia manda: cada TP está pensado para tomar una semana, y las defensas
+agrupan bloques (P1 = TPs 1–4, P2 = TPs 5–9). Un sprint de **una** semana obligaría a cerrar y
+replanificar en el mismo día en que se entrega el práctico, y cualquier semana con parcial de otra
+materia lo dejaría vacío. Uno de **cuatro** semanas tapa el problema al revés: dos prácticos enteros
+adentro del mismo sprint, sin ningún momento de corte para mirar si el ritmo alcanza.
+
+Dos semanas entran exactamente dos TPs, que es la unidad natural de trabajo acá, y dejan un punto de
+revisión cada quince días — frecuente para corregir el rumbo, espaciado como para que la ceremonia no
+cueste más que el trabajo.
+
+### 2. Límite de trabajo en progreso y por qué
+
+**Dos**, en la columna *In Progress*.
+
+La regla de arranque es *cantidad de personas + 1*, y acá la persona es una sola. El "+1" no es un
+permiso para hacer dos cosas a la vez: es la **válvula** para cuando algo queda esperando algo que no
+depende de mí — una corrida de CI de varios minutos, una respuesta de la cátedra, un servicio gratuito
+que hay que verificar. En vez de mirar la pantalla, muevo una segunda tarjeta.
+
+Con tres o más el límite deja de limitar: se convierte en un backlog paralelo, todo queda empezado y
+nada terminado, que es exactamente lo que un límite de trabajo en progreso existe para evitar. La
+señal de que quedó **demasiado alto** es no alcanzarlo nunca — si nunca me frena, no está midiendo
+nada. La señal de que quedó **demasiado bajo** sería quedarme bloqueado sin nada que hacer con una
+tarjeta esperando de verdad.
+
+GitHub no impide pasarse: pone el contador de la columna en rojo. El límite es un **acuerdo visible**,
+no un candado — y esa es la diferencia entre un tablero que ordena el trabajo y uno que solo lo
+dibuja.
+
+### 3. Diagnóstico de la historia mal escrita
+
+La historia del ejercicio (issue #13) dice: *"Como desarrollador quiero crear la tabla usuarios para
+guardar los datos."*
+
+**Por qué está mal**: es una **tarea técnica disfrazada de historia**. El beneficiario es el
+desarrollador y no un usuario del sistema, el "para" no expresa ningún valor (*guardar los datos* es
+un medio, no un fin: nadie usa el producto para que existan filas en una tabla), y no tiene ningún
+criterio de aceptación verificable — "crear la tabla" está hecho o no está hecho, pero no hay forma
+de comprobar que el sistema hace algo distinto para alguien. Además fija la **solución** (una tabla)
+en vez del problema, con lo cual cierra la puerta a cualquier otra implementación.
+
+**Cómo la reescribiría**: *"Como ciudadano quiero registrarme con mi correo y mi documento para poder
+sacar turnos a mi nombre y ver los que ya pedí."* Con criterios comprobables: no se aceptan dos
+cuentas con el mismo documento; un correo inválido muestra el error sin enviar el formulario; después
+de registrarme veo únicamente mis propios turnos. La tabla pasa a ser lo que siempre fue — una
+**tarea** dentro de esa historia, junto con el endpoint y la pantalla.
+
+### 4. Problemas encontrados y cómo se resolvieron
+
+- **El scope `project` de `gh` no se puede obtener sin un navegador.** Los comandos `gh project`
+  piden los scopes `project`/`read:project`, que no vienen con la autenticación inicial (la mía
+  traía `repo`, `workflow`, `write:packages` y otros, pero no ése). `gh auth refresh -s project`
+  arranca un *device flow*: imprime un código de un solo uso y exige abrir
+  `github.com/login/device` y confirmar a mano. Es un paso deliberadamente humano.
+  **Todo lo que vive en el repositorio se hizo por consola** —las tres etiquetas, la épica, la
+  historia, las dos tareas, el bug, la jerarquía de sub-issues y el Pull Request con `Closes`—; el
+  **Project** en sí (el tablero, el campo *Sprint*, el límite de trabajo en progreso y la
+  visibilidad pública) se configuró después desde la web, que es además como lo muestra el video de
+  la cátedra.
+- **Los backticks del shell se comieron parte del cuerpo de un issue.** Al crear la tarea #8 con
+  `gh issue create --body '... `.github/workflows/ci.yml` ...'`, zsh interpretó el texto entre
+  backticks como una **sustitución de comando** y el issue quedó publicado con un hueco donde iba la
+  ruta (`Crear  con el disparador…`). Se detectó releyendo el issue con `gh issue view --json body` y
+  se corrigió con `gh issue edit --body`. Es la misma clase de error que en un pipeline aparece como
+  una variable vacía que nadie nota.
+- **La jerarquía se armó con sub-issues, no con task-lists.** Las task-lists (`- [ ] #12` en el
+  cuerpo) se ven parecidas pero **no** crean la relación padre-hijo navegable que el TP pide: no se
+  puede subir de la tarea a su historia y de ahí a la épica. Se usó
+  `gh issue edit <épica> --add-sub-issue <historia>`, disponible desde `gh` 2.94 (acá, 2.97), y se
+  verificó por GraphQL que el árbol se recorre en los dos sentidos.
+- **El bug va al costado de la jerarquía, no colgando de la historia.** El árbol cuenta lo que se
+  planificó construir; un bug es un defecto de algo **ya entregado** — en este caso, del TP2. Si
+  colgara de la historia que lo originó, esa historia (ya cerrada) volvería a mostrar trabajo
+  pendiente y su barra de progreso mentiría. El matiz que sí reconozco: hay equipos que registran los
+  defectos *dentro* del sprint colgados de su historia, no para planificar sino para **medir** cuántos
+  se escapan; es una convención de trabajo, no una regla de la herramienta.
+
+### 5. Declaración de uso de IA
+
+**Todo el TP3 fue ejecutado con asistencia de IA** (Claude Code, modelo Claude Fable 5) bajo mi
+indicación: la creación de las tres etiquetas, la épica, la historia con sus cuatro criterios de
+aceptación, las dos tareas, el bug, el armado de la jerarquía de sub-issues, el Pull Request con
+`Closes #8` y la redacción de este archivo.
+
+Cómo se verificó:
+- **La jerarquía se comprobó consultándola por GraphQL**, no mirando la pantalla: la épica #6 devuelve
+  la historia #7 como sub-issue, y ésta devuelve las tareas #8 y #9.
+- **La trazabilidad se comprobó sobre el resultado real**: después de mergear el PR #11, el issue #8
+  quedó `CLOSED` con razón `COMPLETED`, y su *timeline* nombra al PR #11 como el que lo cerró. La
+  historia #7 y la épica #6 siguen **abiertas**, que es lo que corresponde: el PR implementó una de
+  las dos tareas, no la historia entera.
+- El error de los backticks lo cometió la IA y quedó documentado arriba, junto con cómo se detectó.
+
+Lo que se defiende en P1 no es haber reproducido el procedimiento: es poder explicar por qué el sprint
+dura dos semanas, por qué el límite es dos, por qué cada criterio de aceptación es verificable y por
+qué el bug no cuelga de la historia.

@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Turnos.Api", "Turnos.Api\Turnos.Api.csproj", "{CCB2D877-05DD-4C33-A75C-6C395D945713}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Turnos.Api.Tests", "Turnos.Api.Tests\Turnos.Api.Tests.csproj", "{BA51D376-44C3-472B-AA94-9A4D61F7F8A2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCB2D877-05DD-4C33-A75C-6C395D945713}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCB2D877-05DD-4C33-A75C-6C395D945713}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCB2D877-05DD-4C33-A75C-6C395D945713}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCB2D877-05DD-4C33-A75C-6C395D945713}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA51D376-44C3-472B-AA94-9A4D61F7F8A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA51D376-44C3-472B-AA94-9A4D61F7F8A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA51D376-44C3-472B-AA94-9A4D61F7F8A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA51D376-44C3-472B-AA94-9A4D61F7F8A2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,5 +1,7 @@
 # Sistema de Turnos — IngSoft3 UCC 2026
 
+[![CI](https://github.com/santiago6124/ingsoft3-turnos/actions/workflows/ci.yml/badge.svg)](https://github.com/santiago6124/ingsoft3-turnos/actions/workflows/ci.yml)
+
 Mini sistema de gestión de turnos (inspirado en la Dirección Nacional de Migraciones): un
 ciudadano pide un turno para un trámite en un horario habilitado, y un operador lo confirma o lo
 cancela. Es **la app del semestre** de Ingeniería del Software 3: sobre ella se construye, TP a TP,

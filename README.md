@@ -1,4 +1,4 @@
-# Proyecto IngSoft3 - versión A
+# Proyecto IngSoft3 - versión B
 IngSoft3 UCC 2026 — Sistema de turnos (.NET 8 + React + PostgreSQL) con pipeline DevOps de punta a punta
 
 ## Instalación

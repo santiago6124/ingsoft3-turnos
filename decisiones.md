@@ -228,6 +228,14 @@ runner en vez de bajar éstas. El build multi-arquitectura con `docker buildx` e
   Desktop: `brew install colima docker docker-compose docker-buildx`, `colima start`. Es un demonio de
   Docker corriendo en una VM Linux, sin interfaz gráfica ni licencia comercial. Todo lo que pide la
   materia (`docker build`, `docker compose`, buildx, registry) funciona igual.
+- **Con colima, el proyecto tiene que vivir bajo `$HOME`.** Al verificar el arranque desde cero se
+  clonó el repo en un directorio temporal de `mktemp -d` (que en macOS cae en `/var/folders/...`): los
+  contenedores arrancaron, la SPA respondió 200, pero `/api` devolvía **502** y `/health` no contestaba
+  nunca. No era la app: colima corre el demonio de Docker **dentro de una VM Linux** y sólo monta
+  `$HOME` en ella, así que el contexto de build de una carpeta fuera de `$HOME` no llega completo.
+  Repitiendo el mismo clon bajo `$HOME`, el sistema levanta perfecto. Es la misma clase de problema que
+  el TP4 hace visible en el pipeline: **lo que no viaja al entorno donde se construye, no existe ahí** —
+  con Docker Desktop no pasa porque monta más rutas por defecto.
 
 ### 4. Declaración de uso de IA
 

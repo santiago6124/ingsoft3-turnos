@@ -1,10 +1,16 @@
 # Evidencias
 
-Salidas de terminal capturadas en el momento de cada paso. Cada TP agrega su sección.
+Evidencias de cada práctico, capturadas en el momento en que ocurrió cada paso. Cada TP agrega su
+sección.
 
-> 📸 Las capturas de la interfaz web de GitHub (aviso de conflicto en el PR #3 y página de la
-> release) se agregan en `evidencias/img/`; por ahora la evidencia es la salida de `gh`, que
-> muestra el mismo estado.
+> **Sobre el formato.** Las cuatro evidencias del TP1 están como **salida de terminal literal**, no
+> como imagen. Para las dos que ocurren en la consola —el push rechazado y los marcadores del
+> conflicto— el texto *es* la captura, y además se puede leer, buscar y copiar. Para las dos que
+> ocurren en la web de GitHub se agrega el **link directo** al objeto, que muestra el estado real y
+> no una foto de un momento:
+>
+> - Aviso de conflicto → [PR #3](https://github.com/santiago6124/ingsoft3-turnos/pull/3)
+> - Release publicada → [v1.0.0](https://github.com/santiago6124/ingsoft3-turnos/releases/tag/v1.0.0)
 
 ## TP1 — Git colaborativo
 
@@ -26,7 +32,8 @@ error: failed to push some refs to 'https://github.com/santiago6124/ingsoft3-tur
 ### 2. El PR de la rama B no se puede mergear: conflicto
 
 Después de mergear el PR #2 (`feature/titulo-a`), GitHub marca el PR #3 como `CONFLICTING` /
-`DIRTY`:
+`DIRTY`. Se puede ver en vivo en
+**[el PR #3](https://github.com/santiago6124/ingsoft3-turnos/pull/3)**:
 
 ```
 $ gh pr view 3 --json number,title,state,mergeable,mergeStateStatus,baseRefName,headRefName
@@ -63,6 +70,9 @@ git clone https://github.com/santiago6124/ingsoft3-turnos.git
 ````
 
 ### 4. La release `v1.0.0` publicada
+
+Publicada en
+**[Releases → v1.0.0](https://github.com/santiago6124/ingsoft3-turnos/releases/tag/v1.0.0)**:
 
 ```
 $ gh release view v1.0.0

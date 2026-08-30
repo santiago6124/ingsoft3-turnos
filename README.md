@@ -1,4 +1,4 @@
-# Sistema de Turnos — IngSoft3 UCC 2026
+# Sistema de Turnos — versión A (demo de conflicto)
 
 [![CI](https://github.com/santiago6124/ingsoft3-turnos/actions/workflows/ci.yml/badge.svg)](https://github.com/santiago6124/ingsoft3-turnos/actions/workflows/ci.yml)
 

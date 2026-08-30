@@ -3,14 +3,10 @@
 Evidencias de cada práctico, capturadas en el momento en que ocurrió cada paso. Cada TP agrega su
 sección.
 
-> **Sobre el formato.** Las cuatro evidencias del TP1 están como **salida de terminal literal**, no
-> como imagen. Para las dos que ocurren en la consola —el push rechazado y los marcadores del
-> conflicto— el texto *es* la captura, y además se puede leer, buscar y copiar. Para las dos que
-> ocurren en la web de GitHub se agrega el **link directo** al objeto, que muestra el estado real y
-> no una foto de un momento:
->
-> - Aviso de conflicto → [PR #3](https://github.com/santiago6124/ingsoft3-turnos/pull/3)
-> - Release publicada → [v1.0.0](https://github.com/santiago6124/ingsoft3-turnos/releases/tag/v1.0.0)
+> **Sobre el formato.** Las dos evidencias que ocurren en la consola —el push rechazado y los
+> marcadores del conflicto— van como **salida de terminal literal**: ahí el texto *es* la captura, y
+> además se puede leer, buscar y copiar. Las dos que ocurren en la web de GitHub van como **imagen**
+> en `evidencias/img/`, más el **link directo** al objeto para verlo en vivo.
 
 ## TP1 — Git colaborativo
 
@@ -39,6 +35,15 @@ Después de mergear el PR #2 (`feature/titulo-a`), GitHub marca el PR #3 como `C
 $ gh pr view 3 --json number,title,state,mergeable,mergeStateStatus,baseRefName,headRefName
 {"baseRefName":"main","headRefName":"feature/titulo-b","mergeStateStatus":"DIRTY","mergeable":"CONFLICTING","number":3,"state":"OPEN","title":"Renombra el título del README (versión B)"}
 ```
+
+![PR #3 ya mergeado, con el commit que resolvió el conflicto](evidencias/img/pr3-conflicto-resuelto.png)
+
+⚠️ **Honestidad sobre esta captura**: es del PR **ya mergeado**, así que el cartel *"This branch has
+conflicts that must be resolved"* ya no aparece — ese aviso sólo existe mientras el PR está abierto y
+en conflicto, y no se puede recuperar después. Lo que sí prueba la imagen es el desenlace: los dos
+commits de la rama, y el segundo es `fix: resuelve conflicto de título tomando la versión B`. La
+evidencia del **estado** de conflicto es la salida de `gh` de acá arriba, tomada en el momento en que
+el PR estaba en `CONFLICTING`.
 
 ### 3. Los marcadores del conflicto
 
@@ -73,6 +78,8 @@ git clone https://github.com/santiago6124/ingsoft3-turnos.git
 
 Publicada en
 **[Releases → v1.0.0](https://github.com/santiago6124/ingsoft3-turnos/releases/tag/v1.0.0)**:
+
+![Release v1.0.0 publicada, con su tag y sus notas](evidencias/img/release-v1.0.0.png)
 
 ```
 $ gh release view v1.0.0

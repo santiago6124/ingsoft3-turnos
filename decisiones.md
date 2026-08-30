@@ -237,7 +237,12 @@ imágenes quedan junto al código, y en el TP7 el pipeline se va a poder autenti
 `GITHUB_TOKEN` del propio workflow, sin guardar ningún secreto. Ambas imágenes llevan
 `LABEL org.opencontainers.image.source` apuntando a este repositorio para que queden enlazadas.
 
-**⚠️ Arquitectura**: las imágenes `v0.1.0` se construyeron en una Mac con chip Apple, así que son
+**Versiones publicadas**: `v0.1.0` fue la del cierre del TP2. Al arreglar el bug del issue #10 se
+publicó `v0.1.1` y el `docker-compose.registry.yml` pasó a apuntar ahí — es exactamente lo que
+significa el tercer número en semver: un arreglo compatible, sin cambios de API ni de configuración.
+Las dos versiones siguen publicadas: la vieja no se borra, se deja de referenciar.
+
+**⚠️ Arquitectura**: las imágenes se construyeron en una Mac con chip Apple, así que son
 `linux/arm64`. En una máquina x86 el `pull` falla con `no matching manifest for linux/amd64`, y los
 runners de GitHub Actions son x86 — por eso el pipeline del TP4 construye sus propias imágenes en el
 runner en vez de bajar éstas. El build multi-arquitectura con `docker buildx` es tema del TP7.

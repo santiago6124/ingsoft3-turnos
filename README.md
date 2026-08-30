@@ -70,7 +70,7 @@ docker compose down -v     # apaga Y borra el volumen: la base vuelve a cero
 ### Levantar sin el código: las imágenes publicadas
 
 `docker-compose.registry.yml` es el mismo compose, pero en vez de construir baja
-`ghcr.io/santiago6124/turnos-backend:v0.1.0` y `ghcr.io/santiago6124/turnos-frontend:v0.1.0`
+`ghcr.io/santiago6124/turnos-backend:v0.1.1` y `ghcr.io/santiago6124/turnos-frontend:v0.1.1`
 (públicas). Necesita el mismo `.env`:
 
 ```bash
@@ -78,7 +78,7 @@ cp .env.example .env
 docker compose -f docker-compose.registry.yml up -d
 ```
 
-> Las imágenes `v0.1.0` se construyeron en una Mac con chip Apple (arm64). En una máquina x86
+> Las imágenes se construyeron en una Mac con chip Apple (arm64). En una máquina x86
 > el `pull` falla con `no matching manifest for linux/amd64`; el build multi-arquitectura se
 > resuelve en el TP7.
 

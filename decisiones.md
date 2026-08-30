@@ -2,6 +2,31 @@
 
 Registro de decisiones del semestre. Cada TP agrega su sección abajo de la anterior.
 
+## Nota sobre el proceso y el historial
+
+El historial de este repositorio muestra que **catorce de los quince commits entraron el martes
+25/08 entre las 18:15 y las 20:23**, y conviene decirlo acá antes de que lo pregunten: los cuatro
+prácticos se hicieron en una sola sesión de trabajo, no una semana por práctico.
+
+Cómo fue realmente: los TPs 1 a 4 ya estaban publicados cuando arranqué, así que los hice
+**en orden y de corrido**, cada uno apoyándose en el anterior — el TP2 sobre el repo protegido del
+TP1, el TP4 sobre los Dockerfiles del TP2. La sesión fue asistida con IA (Claude Code), declarado en
+detalle en la sección de cada práctico, con la IA operando `git`, `gh` y `docker` bajo mi indicación
+y yo verificando cada salida antes de seguir. Eso explica el ritmo: lo que llevó tiempo no fue
+teclear los comandos, sino leer los cuatro enunciados, elegir la app del semestre contra los cinco
+criterios, y entender qué estaba haciendo cada paso.
+
+No lo presento como la forma recomendada de cursar. La materia está diseñada para que cada práctico
+tome una semana, y trabajar así concentra el riesgo: si algo se rompía, no había margen. Lo que sí
+sostengo es lo que la cátedra pide que se sostenga — **poder explicar cada decisión**: por qué `main`
+está protegida así, por qué el Dockerfile tiene dos etapas, por qué el sprint dura dos semanas, por
+qué el límite de trabajo en progreso es dos, y qué frena y qué destraba un merge. Los problemas que
+aparecieron en el camino están contados en la sección «Problemas encontrados» de cada práctico, con
+el error concreto y cómo se resolvió; no están puestos de adorno.
+
+El único commit posterior es del domingo 30/08: corrige un bug de renderizado de markdown en
+`evidencias.md` que sólo se veía mirando el archivo en GitHub (está contado en el TP1 §2).
+
 ## TP1 — Git colaborativo
 
 ### 1. Por qué Git no pudo resolver el conflicto solo

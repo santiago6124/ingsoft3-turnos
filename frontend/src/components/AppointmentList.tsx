@@ -6,6 +6,11 @@ import type { Appointment } from '../types'
 interface AppointmentListProps {
   appointments: Appointment[]
   loading: boolean
+  /** La última carga falló: NO se puede afirmar que no haya turnos (issue #10). */
+  cargaFallida: boolean
+  /** Todavía quedan reintentos automáticos por delante. */
+  reintentando: boolean
+  onReintentar: () => void
   statusFilter: string
   onStatusFilterChange: (status: string) => void
   serviceTypeFilter: string
@@ -19,6 +24,9 @@ interface AppointmentListProps {
 export default function AppointmentList({
   appointments,
   loading,
+  cargaFallida,
+  reintentando,
+  onReintentar,
   statusFilter,
   onStatusFilterChange,
   serviceTypeFilter,
@@ -77,9 +85,27 @@ export default function AppointmentList({
 
       {loading && <p>Cargando...</p>}
 
-      {!loading && appointments.length === 0 && <p>No hay turnos agendados para mostrar.</p>}
+      {/*
+        Issue #10: cuando la carga falla NO se puede decir "no hay turnos" — no se
+        sabe. Se avisa que no se pudieron traer y se ofrece reintentar.
+      */}
+      {!loading && cargaFallida && (
+        <div className="load-error" role="alert">
+          <p>
+            No se pudieron cargar los turnos.
+            {reintentando && ' Reintentando…'}
+          </p>
+          <button type="button" onClick={onReintentar}>
+            Reintentar ahora
+          </button>
+        </div>
+      )}
 
-      {!loading && appointments.length > 0 && (
+      {!loading && !cargaFallida && appointments.length === 0 && (
+        <p>No hay turnos agendados para mostrar.</p>
+      )}
+
+      {!loading && !cargaFallida && appointments.length > 0 && (
         <table>
           <thead>
             <tr>

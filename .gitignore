@@ -24,5 +24,8 @@ Thumbs.db
 
 # Node / Vite (frontend)
 *.tsbuildinfo
+# artefactos que genera `tsc -b` al incluir vite.config.ts en el proyecto
+vite.config.js
+vite.config.d.ts
 *.timestamp-*.mjs
 npm-debug.log*

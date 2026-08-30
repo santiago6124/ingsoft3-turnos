@@ -38,7 +38,7 @@ $ gh pr view 3 --json number,title,state,mergeable,mergeStateStatus,baseRefName,
 Parado en `feature/titulo-b`, `git merge origin/main` se detiene y deja las dos versiones de la
 línea 1 entre marcadores. La sección *Instalación*, que ninguna rama tocó, se fusionó sola:
 
-```
+````
 $ git merge origin/main
 Auto-merging README.md
 CONFLICT (content): Merge conflict in README.md
@@ -60,7 +60,7 @@ IngSoft3 UCC 2026 — Sistema de turnos (.NET 8 + React + PostgreSQL) con pipeli
 ```bash
 git clone https://github.com/santiago6124/ingsoft3-turnos.git
 ```
-```
+````
 
 ### 4. La release `v1.0.0` publicada
 
@@ -280,51 +280,75 @@ dejó el cache en la rama base, así que el PR #14 construyó el frontend en **2
 
 ### 2. El gate actuando: rojo → bloqueado → fix → verde → merge
 
-```
-### 1. El gate bloqueando el merge — PR #14 con el build roto
+La secuencia completa sobre el **PR #14**, la rama que rompió el build a propósito
+(`using NoExiste;` en `Program.cs`).
 
+#### 2.1 · Rojo: el check falla y el merge queda bloqueado
+
+```
 $ gh pr checks 14
 build-backend    fail   39s
 build-frontend   pass   20s
 
 $ gh pr view 14 --json mergeable,mergeStateStatus
 {"mergeStateStatus":"BLOCKED","mergeable":"MERGEABLE"}
+```
 
-# mergeable=MERGEABLE (no hay conflicto de contenido) pero BLOCKED: lo frena el check en rojo.
-# Alcanza con UNO de los dos checks requeridos fallando, aunque el otro esté en verde.
+`mergeable: MERGEABLE` dice que **no hay conflicto de contenido**; el que frena es
+`mergeStateStatus: BLOCKED`, o sea el gate. Alcanza con que **uno solo** de los dos checks
+requeridos falle, aunque el otro esté en verde.
 
-# El error, en el log del job que falló:
-#15 2.846 /src/Turnos.Api/Program.cs(2,7): error CS0246: The type or namespace name 'NoExiste' could not be found (are you missing a using directive or an assembly reference?) [/src/Turnos.Api/Turnos.Api.csproj]
-2.846 /src/Turnos.Api/Program.cs(2,7): error CS0246: The type or namespace name 'NoExiste' could not be found (are you missing a using directive or an assembly reference?) [/src/Turnos.Api/Turnos.Api.csproj]
+El error que lo tiró abajo, en el log del job `build-backend`:
 
-$ gh api ".../branches/main/protection"   # las condiciones que exige main hoy
-{"alcanza_a_admins":true,"aprobaciones":0,"checks_requeridos":["build-backend","build-frontend"],"pull_request_obligatorio":true,"rama_actualizada_strict":true}
+```
+#15 2.846 /src/Turnos.Api/Program.cs(2,7): error CS0246: The type or namespace name 'NoExiste'
+could not be found (are you missing a using directive or an assembly reference?)
+[/src/Turnos.Api/Turnos.Api.csproj]
+```
 
-### 2. Tras el fix: los dos checks en verde y el merge habilitado
+Y las condiciones que `main` exige hoy para aceptar un merge:
 
+```
+$ gh api ".../branches/main/protection"
+{"alcanza_a_admins":true,
+ "aprobaciones":0,
+ "checks_requeridos":["build-backend","build-frontend"],
+ "pull_request_obligatorio":true,
+ "rama_actualizada_strict":true}
+```
+
+#### 2.2 · Verde: tras el fix, los dos checks pasan y el merge se habilita
+
+```
 $ gh pr checks 14
 build-backend    pass   14s
 build-frontend   pass   12s
 
 $ gh pr view 14 --json mergeable,mergeStateStatus
 {"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}
+```
 
-### 3. `strict: true` — Require branches to be up to date
+#### 2.3 · `strict: true` — Require branches to be up to date
 
-# Al mergear el #14, main avanzó. El PR #15 tenía sus dos checks en verde,
-# pero ese verde se sacó contra un main que ya no existe:
+Al mergear el #14, `main` avanzó. El PR #15 tenía sus dos checks en verde, pero ese verde se
+había sacado contra un `main` que ya no existía:
 
+```
 $ gh pr view 15 --json mergeStateStatus,mergeable
 {"mergeStateStatus":"BEHIND","mergeable":"MERGEABLE"}
+```
 
-# BEHIND = la rama quedó atrás de main. GitHub muestra el botón "Update branch"
-# y no deja mergear hasta que el pipeline vuelva a correr sobre la MEZCLA.
-# Esto sólo se puede ver con dos Pull Requests abiertos al mismo tiempo.
+`BEHIND` = la rama quedó atrás de `main`. GitHub muestra el botón **Update branch** y no deja
+mergear hasta que el pipeline vuelva a correr sobre la **mezcla**. Esto sólo se puede ver con
+**dos** Pull Requests abiertos al mismo tiempo — con uno solo, nunca aparece.
 
-# Después de apretar "Update branch", el pipeline corre sobre la MEZCLA y recién ahí destraba:
+Después de apretar *Update branch*, el pipeline corre sobre la mezcla y recién ahí destraba:
+
+```
 $ gh pr checks 15
 build-backend    pass   18s
 build-frontend   pass   16s
+
 $ gh pr view 15 --json mergeStateStatus
 {"mergeStateStatus":"CLEAN"}
 ```

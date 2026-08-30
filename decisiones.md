@@ -62,6 +62,17 @@ tocó.
   entrega. Como el reglamento (§3) indica, se movió el tag al commit que sí la incluye con
   `git tag -f v1.0.0 && git push -f origin v1.0.0`, y queda registrado acá. La release `v1.0.0`
   sigue asociada al tag, por lo que pasa a mostrar el commit nuevo.
+- **`evidencias.md` se veía bien en el editor y mal en GitHub.** La evidencia del conflicto muestra el
+  `README.md` en conflicto, y ese README **contiene a su vez** un bloque de código (el `git clone` de
+  la sección *Instalación*). Al pegarlo dentro de un bloque de tres backticks, el bloque de adentro
+  cerró al de afuera antes de tiempo y **desalineó todos los bloques siguientes del archivo**: de la
+  línea 60 en adelante la prosa se renderizaba como código y el código como prosa, y el archivo
+  terminaba con un bloque sin cerrar. En el editor local no se nota — se ve mirando el archivo *en
+  GitHub*. Se arregló usando fences de **cuatro** backticks en el bloque de afuera, que dejan al de
+  tres adentro como contenido literal. Aprovechando el mismo cambio, la evidencia del gate del TP4 se
+  partió en subsecciones reales en vez de un único bloque de 47 líneas. Como esto corrige archivos ya
+  etiquetados, se movió el tag `v4.0.0` al commit corregido (`git tag -f` + `git push -f`), igual que
+  se había hecho con `v1.0.0`.
 - **La máquina no tenía Docker ni .NET.** Como la app del semestre es .NET 8 y desde la clase 2 hace
   falta Docker, se instalaron `dotnet@8` (Homebrew) y Docker vía `colima` + `docker` CLI +
   plugins `compose` y `buildx`, en lugar de Docker Desktop. Es funcionalmente equivalente para todo

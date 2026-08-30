@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -9,5 +10,13 @@ export default defineConfig({
     proxy: {
       '/api': { target: 'http://localhost:5080', changeOrigin: true },
     },
+  },
+  test: {
+    // jsdom da un DOM de mentira para poder renderizar componentes sin navegador.
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.ts',
+    // El build de producción no debe mirar los tests.
+    exclude: ['node_modules/**', 'dist/**'],
   },
 })

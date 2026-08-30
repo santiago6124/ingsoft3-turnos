@@ -38,12 +38,27 @@ $ gh pr view 3 --json number,title,state,mergeable,mergeStateStatus,baseRefName,
 
 ![PR #3 ya mergeado, con el commit que resolvió el conflicto](evidencias/img/pr3-conflicto-resuelto.png)
 
-⚠️ **Honestidad sobre esta captura**: es del PR **ya mergeado**, así que el cartel *"This branch has
-conflicts that must be resolved"* ya no aparece — ese aviso sólo existe mientras el PR está abierto y
-en conflicto, y no se puede recuperar después. Lo que sí prueba la imagen es el desenlace: los dos
-commits de la rama, y el segundo es `fix: resuelve conflicto de título tomando la versión B`. La
-evidencia del **estado** de conflicto es la salida de `gh` de acá arriba, tomada en el momento en que
-el PR estaba en `CONFLICTING`.
+⚠️ **Qué muestra y qué no muestra esta captura**: es del PR **ya mergeado**, así que el cartel *"This
+branch has conflicts that must be resolved"* ya no aparece — ese aviso sólo existe mientras el PR
+está abierto y en conflicto, y una vez mergeado no se puede recuperar. Lo que sí prueba la imagen es
+el desenlace: los dos commits de la rama, y el segundo es `fix: resuelve conflicto de título tomando
+la versión B`. La evidencia del **estado** de conflicto es la salida de `gh` de acá arriba, tomada en
+el momento en que el PR estaba en `CONFLICTING`.
+
+#### El aviso de conflicto, reproducido
+
+Como en el PR #3 ese cartel ya no se puede ver, se reprodujo la situación **a propósito** en el
+**[PR #27](https://github.com/santiago6124/ingsoft3-turnos/pull/27)**: dos ramas nuevas
+(`demo/conflicto-a` y `demo/conflicto-b`) salidas del mismo commit, cambiando la misma primera línea
+del README con textos distintos. **No apunta a `main`** —la base es `demo/conflicto-base`— así que la
+entrega no se toca.
+
+![Aviso de conflicto en el PR #27: "This branch has conflicts that must be resolved"](evidencias/img/aviso-conflicto-pr27-demo.png)
+
+📌 **Esta captura es de una reproducción, no del conflicto original del TP1.** Se incluye porque es
+la pantalla que el enunciado pide ver y en el PR original ya no existe. Ahí se ve el aviso, el
+archivo en conflicto (`README.md`), el botón *Resolve conflicts* y el botón de merge **deshabilitado**
+— que es el punto: con un conflicto sin resolver, GitHub no deja integrar.
 
 ### 3. Los marcadores del conflicto
 

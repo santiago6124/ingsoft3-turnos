@@ -24,8 +24,23 @@ qué el límite de trabajo en progreso es dos, y qué frena y qué destraba un m
 aparecieron en el camino están contados en la sección «Problemas encontrados» de cada práctico, con
 el error concreto y cómo se resolvió; no están puestos de adorno.
 
-El único commit posterior es del domingo 30/08: corrige un bug de renderizado de markdown en
-`evidencias.md` que sólo se veía mirando el archivo en GitHub (está contado en el TP1 §2).
+El repositorio siguió recibiendo trabajo después de esa sesión. El **domingo 30/08** entraron cinco
+commits más, y ninguno es de relleno:
+
+- El arreglo del renderizado de `evidencias.md`, un bug que sólo se veía mirando el archivo en
+  GitHub y no en el editor (contado en el TP1 §2).
+- El montaje de **vitest** en el frontend, que no tenía runner ni un solo test, con ocho tests sobre
+  la lógica de `src/format.ts` — el agrupamiento del DNI, su dígito verificador y el caso borde en
+  que la cantidad de dígitos es múltiplo de tres.
+- El **arreglo del bug del issue #10**, el que yo mismo había registrado en el TP3: cuando fallaba
+  la carga, la lista afirmaba «No hay turnos agendados», que es mentira — sí había, no se pudieron
+  traer. Va con cuatro tests, y el principal **falla contra el código anterior**: ésa es la
+  diferencia entre un test de regresión y un test decorativo.
+- La publicación de **`v0.1.1`** con ese arreglo, porque las imágenes `v0.1.0` seguían teniendo el
+  bug y son las que levanta el compose del registry.
+
+Los tests **no se agregaron al pipeline** a propósito: el enunciado del TP4 dice que eso es el TP5.
+Corren con `npm test` y quedan listos para cuando el pipeline los tenga que ejecutar.
 
 ## TP1 — Git colaborativo
 

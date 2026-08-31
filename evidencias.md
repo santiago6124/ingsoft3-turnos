@@ -161,6 +161,31 @@ $ curl -s localhost:8080/api/turnos | jq -c ".[] | {id,citizenName,scheduledAt,s
 {"id":2,"citizenName":"Juan Gómez","scheduledAt":"2026-08-27T10:15:00","serviceType":"Radicación","status":"Pending"}
 ```
 
+### 1.b El health check detecta la base caída
+
+El endpoint no dice «ok» por costumbre: consulta la base antes de contestar.
+
+```
+# --- 1. Base arriba: el health la comprueba y contesta ok ---
+$ curl -s -w "  <- HTTP %{http_code}
+" localhost:8080/health
+{"status":"ok","database":"ok"}  <- HTTP 200
+
+# --- 2. Tiro la base. El backend SIGUE VIVO, pero no puede atender ---
+$ docker compose stop db && curl -s -w "  <- HTTP %{http_code}
+" localhost:8080/health
+{"status":"degraded","database":"unreachable"}  <- HTTP 503
+
+# --- 3. La devuelvo: vuelve a 200 sola ---
+$ docker compose start db && curl -s -w "  <- HTTP %{http_code}
+" localhost:8080/health
+{"status":"ok","database":"ok"}  <- HTTP 200
+```
+
+El contenedor del backend **nunca se cayó** en los tres pasos: lo que cambia es lo que *responde*,
+porque su dependencia dejó de estar. Un health que hubiera contestado 200 en el paso 2 habría estado
+mintiendo.
+
 ### 2. Prueba de persistencia
 
 `down` conserva los datos (el volumen sobrevive al contenedor); `down -v` los borra:

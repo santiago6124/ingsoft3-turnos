@@ -262,6 +262,21 @@ Las dos versiones siguen publicadas: la vieja no se borra, se deja de referencia
 runners de GitHub Actions son x86 — por eso el pipeline del TP4 construye sus propias imágenes en el
 runner en vez de bajar éstas. El build multi-arquitectura con `docker buildx` es tema del TP7.
 
+### 2.b El health check comprueba su dependencia
+
+El endpoint `/health` original devolvía `{"status":"ok"}` incondicionalmente: contestaba 200 aunque
+la base estuviera caída. Eso no es un health check, es un «el proceso está vivo» — y es peligroso,
+porque un orquestador lo lee como *sano* y le sigue mandando tráfico a una instancia que no puede
+atender un solo pedido.
+
+Ahora hace `CanConnectAsync()` contra la base y responde en consecuencia: **200** con
+`{"status":"ok","database":"ok"}`, o **503** con `{"status":"degraded","database":"unreachable"}`.
+La prueba está en `evidencias.md`: con la base arriba da 200, apagándola da 503, y al devolverla
+vuelve a 200 sin reiniciar nada.
+
+Es la misma clase de defecto que el bug del issue #10 —afirmar algo que no se comprobó— y por eso se
+arregló igual: no adivinar, verificar.
+
 ### 3. Problemas encontrados y cómo se resolvieron
 
 - **`global.json` fijaba un SDK que no tengo.** El repo original traía `"version": "8.0.422"`, y el SDK

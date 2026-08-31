@@ -49,7 +49,22 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Health check: lo usan el docker-compose (TP2), el pipeline (TP4) y el monitoreo (TP9).
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+//
+// Comprueba la dependencia, no sólo que el proceso esté vivo. Un health check que
+// contesta "ok" sin verificar nada miente: el contenedor puede estar corriendo y la
+// API igual no poder atender un solo pedido porque perdió la base. Devolver 200 en
+// ese estado es peor que no tener health check — un orquestador lo lee como "sano" y
+// le sigue mandando tráfico.
+app.MapGet("/health", async (AppointmentsDbContext db) =>
+{
+    var baseAlcanzable = await db.Database.CanConnectAsync();
+
+    return baseAlcanzable
+        ? Results.Ok(new { status = "ok", database = "ok" })
+        : Results.Json(
+            new { status = "degraded", database = "unreachable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 
 // Applies pending migrations at startup. Needed in Docker, where there's no
 // interactive terminal to run "dotnet ef database update" by hand. Safe to

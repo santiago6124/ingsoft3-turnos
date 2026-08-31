@@ -70,7 +70,7 @@ docker compose down -v     # apaga Y borra el volumen: la base vuelve a cero
 ### Levantar sin el código: las imágenes publicadas
 
 `docker-compose.registry.yml` es el mismo compose, pero en vez de construir baja
-`ghcr.io/santiago6124/turnos-backend:v0.1.1` y `ghcr.io/santiago6124/turnos-frontend:v0.1.1`
+`ghcr.io/santiago6124/turnos-backend:v0.1.2` y `ghcr.io/santiago6124/turnos-frontend:v0.1.2`
 (públicas). Necesita el mismo `.env`:
 
 ```bash
@@ -128,7 +128,7 @@ cd backend && dotnet test Turnos.sln
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/health` | Health check (`{"status":"ok"}`) |
+| `GET` | `/health` | Health check: **comprueba la base**. `200 {"status":"ok","database":"ok"}`, o `503 {"status":"degraded","database":"unreachable"}` si no la alcanza |
 | `POST` | `/api/turnos` | Crea un turno. Body: `citizenName`, `nationalId`, `scheduledAt`, `serviceType` |
 | `GET` | `/api/turnos` | Lista turnos. Filtros opcionales: `status`, `date`, `serviceType`, `search` |
 | `PUT` | `/api/turnos/{id}/confirmar` | Confirma un turno pendiente |

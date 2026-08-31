@@ -12,7 +12,7 @@ services:
       retries: 10
 
   backend:
-    image: ghcr.io/santiago6124/turnos-backend:v0.1.1    # antes: build: ./backend
+    image: ghcr.io/santiago6124/turnos-backend:v0.1.1    # el otro compose lo construye desde ./backend
     environment:
       # Pisa ConnectionStrings:AppointmentsDb de appsettings.json. "db" es el nombre
       # del servicio en la red interna de compose, no localhost.
@@ -24,7 +24,7 @@ services:
         condition: service_healthy     # espera a que la BD esté LISTA, no solo iniciada
 
   frontend:
-    image: ghcr.io/santiago6124/turnos-frontend:v0.1.1   # antes: build: ./frontend
+    image: ghcr.io/santiago6124/turnos-frontend:v0.1.1   # el otro compose lo construye desde ./frontend
     ports:
       - "3000:80"
     depends_on:

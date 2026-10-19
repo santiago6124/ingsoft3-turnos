@@ -18,5 +18,16 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     // El build de producción no debe mirar los tests.
     exclude: ['node_modules/**', 'dist/**'],
+    coverage: {
+      provider: 'v8',
+      // json-summary: the totals file the pipeline turns into the table of the run's Summary.
+      reporter: ['text', 'html', 'json-summary'],
+      // What counts: the logic modules at the top of src/ (api, format, services...).
+      // Components (.tsx) are UI and are left out on purpose; see decisiones.md, TP5.
+      // A new .ts file in src/ enters the count by itself, with or without tests.
+      include: ['src/*.ts'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.d.ts'],
+      thresholds: { lines: 90, branches: 90 },
+    },
   },
 })

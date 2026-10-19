@@ -29,3 +29,8 @@ vite.config.js
 vite.config.d.ts
 *.timestamp-*.mjs
 npm-debug.log*
+
+# reportes de cobertura (TP5): se generan en cada corrida, no se versionan
+coverage/
+coveragereport/
+frontend-coverage/

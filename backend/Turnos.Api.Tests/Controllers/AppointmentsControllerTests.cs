@@ -201,4 +201,27 @@ public class AppointmentsControllerTests
 
         Assert.IsType<BadRequestObjectResult>(result.Result);
     }
+
+    // Found while reading the coverage report: the "appointment is null" branch of
+    // Confirm and Cancel was orange (only the "found" side ran). Input that walks it:
+    // an id that doesn't exist.
+    [Fact]
+    public async Task Confirm_UnknownId_ReturnsNotFound()
+    {
+        var controller = CreateController();
+
+        var result = await controller.Confirm(999);
+
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Cancel_UnknownId_ReturnsNotFound()
+    {
+        var controller = CreateController();
+
+        var result = await controller.Cancel(999);
+
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
 }

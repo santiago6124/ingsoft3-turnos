@@ -24,69 +24,37 @@ public class ScheduleServiceTests
         return new ScheduleService(Microsoft.Extensions.Options.Options.Create(options));
     }
 
-    [Fact]
-    public void IsSlotValid_AlignedTimeOnBusinessDay_IsValid()
+    // 2026-07-09 is a Thursday. Business hours 9:00-16:00 in 15-minute slots.
+    // Each row is one edge of the grid: moving a comparison from <= to < (or the
+    // other way around) turns at least one of them red.
+    [Theory]
+    [InlineData(8, 45, 0, false)]  // before opening
+    [InlineData(9, 0, 0, true)]    // first slot of the day
+    [InlineData(9, 5, 0, false)]   // not aligned to the 15-minute grid
+    [InlineData(9, 15, 0, true)]   // aligned, mid-morning
+    [InlineData(9, 15, 30, false)] // aligned minute, but seconds != 0
+    [InlineData(15, 45, 0, true)]  // last slot: 15:45 + 15 = 16:00 exactly
+    [InlineData(16, 0, 0, false)]  // would end at 16:15, after closing
+    public void IsSlotValid_BusinessDay_RespectsTheGridEdges(int hour, int minute, int second, bool expected)
     {
         var service = CreateService();
+        var dateTime = new DateTime(2026, 7, 9, hour, minute, second);
 
-        // 2026-07-09 is a Thursday.
-        var dateTime = new DateTime(2026, 7, 9, 9, 15, 0);
+        var isValid = service.IsSlotValid(dateTime);
 
-        Assert.True(service.IsSlotValid(dateTime));
+        Assert.Equal(expected, isValid);
     }
 
     [Fact]
     public void IsSlotValid_Weekend_IsNotValid()
     {
         var service = CreateService();
-
-        // 2026-07-11 is a Saturday.
+        // 2026-07-11 is a Saturday, at a time that would be valid on a weekday.
         var dateTime = new DateTime(2026, 7, 11, 9, 0, 0);
 
-        Assert.False(service.IsSlotValid(dateTime));
-    }
+        var isValid = service.IsSlotValid(dateTime);
 
-    [Fact]
-    public void IsSlotValid_NotAlignedToGrid_IsNotValid()
-    {
-        var service = CreateService();
-
-        // 9:05 isn't a multiple of 15 minutes from 9:00.
-        var dateTime = new DateTime(2026, 7, 9, 9, 5, 0);
-
-        Assert.False(service.IsSlotValid(dateTime));
-    }
-
-    [Fact]
-    public void IsSlotValid_BeforeBusinessHours_IsNotValid()
-    {
-        var service = CreateService();
-
-        var dateTime = new DateTime(2026, 7, 9, 8, 45, 0);
-
-        Assert.False(service.IsSlotValid(dateTime));
-    }
-
-    [Fact]
-    public void IsSlotValid_LastValidSlotStartsFifteenMinutesBeforeEndTime()
-    {
-        var service = CreateService();
-
-        // 15:45 + 15 min = 16:00 exactly: fits right within business hours.
-        var dateTime = new DateTime(2026, 7, 9, 15, 45, 0);
-
-        Assert.True(service.IsSlotValid(dateTime));
-    }
-
-    [Fact]
-    public void IsSlotValid_SlotStartingExactlyAtEndTime_IsNotValid()
-    {
-        var service = CreateService();
-
-        // The 16:00 slot would end at 16:15, after EndTime.
-        var dateTime = new DateTime(2026, 7, 9, 16, 0, 0);
-
-        Assert.False(service.IsSlotValid(dateTime));
+        Assert.False(isValid);
     }
 
     [Fact]

@@ -8,8 +8,16 @@ interface ErrorResponse {
   error?: string
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+// The HTTP client comes in as a parameter (defaulting to the browser's fetch) so a test
+// can hand it a double instead of going to the network. Components never pass it.
+export type Fetcher = typeof fetch
+
+export async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  fetcher: Fetcher = fetch,
+): Promise<T> {
+  const res = await fetcher(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
@@ -32,32 +40,38 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function listAppointments(filters: AppointmentFilters = {}): Promise<Appointment[]> {
+// Pure: turns the admin panel's filters into the query string of GET /turnos.
+// Empty filters are left out, so the API doesn't receive "status=" and reject it.
+export function buildAppointmentsQuery(filters: AppointmentFilters = {}): string {
   const params = new URLSearchParams()
   if (filters.status) params.set('status', filters.status)
   if (filters.date) params.set('date', filters.date)
   if (filters.serviceType) params.set('serviceType', filters.serviceType)
   if (filters.search) params.set('search', filters.search)
-  const query = params.toString() ? `?${params.toString()}` : ''
-  return request<Appointment[]>(`/turnos${query}`)
+  const query = params.toString()
+  return query ? `?${query}` : ''
 }
 
-export function createAppointment(appointment: CreateAppointmentInput): Promise<Appointment> {
+export function listAppointments(filters: AppointmentFilters = {}, fetcher?: Fetcher): Promise<Appointment[]> {
+  return request<Appointment[]>(`/turnos${buildAppointmentsQuery(filters)}`, {}, fetcher)
+}
+
+export function createAppointment(appointment: CreateAppointmentInput, fetcher?: Fetcher): Promise<Appointment> {
   return request<Appointment>('/turnos', {
     method: 'POST',
     body: JSON.stringify(appointment),
-  })
+  }, fetcher)
 }
 
-export function listAvailableSlots(date: string, serviceType: string): Promise<AvailableSlot[]> {
+export function listAvailableSlots(date: string, serviceType: string, fetcher?: Fetcher): Promise<AvailableSlot[]> {
   const params = new URLSearchParams({ date, serviceType })
-  return request<AvailableSlot[]>(`/available-slots?${params.toString()}`)
+  return request<AvailableSlot[]>(`/available-slots?${params.toString()}`, {}, fetcher)
 }
 
-export function confirmAppointment(id: number): Promise<Appointment> {
-  return request<Appointment>(`/turnos/${id}/confirmar`, { method: 'PUT' })
+export function confirmAppointment(id: number, fetcher?: Fetcher): Promise<Appointment> {
+  return request<Appointment>(`/turnos/${id}/confirmar`, { method: 'PUT' }, fetcher)
 }
 
-export function cancelAppointment(id: number): Promise<Appointment> {
-  return request<Appointment>(`/turnos/${id}/cancelar`, { method: 'PUT' })
+export function cancelAppointment(id: number, fetcher?: Fetcher): Promise<Appointment> {
+  return request<Appointment>(`/turnos/${id}/cancelar`, { method: 'PUT' }, fetcher)
 }

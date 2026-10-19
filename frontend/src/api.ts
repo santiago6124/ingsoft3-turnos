@@ -8,8 +8,16 @@ interface ErrorResponse {
   error?: string
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+// The HTTP client comes in as a parameter (defaulting to the browser's fetch) so a test
+// can hand it a double instead of going to the network. Components never pass it.
+export type Fetcher = typeof fetch
+
+export async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  fetcher: Fetcher = fetch,
+): Promise<T> {
+  const res = await fetcher(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
@@ -32,14 +40,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function listAppointments(filters: AppointmentFilters = {}): Promise<Appointment[]> {
+// Pure: turns the admin panel's filters into the query string of GET /turnos.
+// Empty filters are left out, so the API doesn't receive "status=" and reject it.
+export function buildAppointmentsQuery(filters: AppointmentFilters = {}): string {
   const params = new URLSearchParams()
   if (filters.status) params.set('status', filters.status)
   if (filters.date) params.set('date', filters.date)
   if (filters.serviceType) params.set('serviceType', filters.serviceType)
   if (filters.search) params.set('search', filters.search)
-  const query = params.toString() ? `?${params.toString()}` : ''
-  return request<Appointment[]>(`/turnos${query}`)
+  const query = params.toString()
+  return query ? `?${query}` : ''
+}
+
+export function listAppointments(filters: AppointmentFilters = {}): Promise<Appointment[]> {
+  return request<Appointment[]>(`/turnos${buildAppointmentsQuery(filters)}`)
 }
 
 export function createAppointment(appointment: CreateAppointmentInput): Promise<Appointment> {

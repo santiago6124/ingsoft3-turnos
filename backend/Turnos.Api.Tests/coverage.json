@@ -1,0 +1,696 @@
+{
+  "Turnos.Api.dll": {
+    "/Users/santiagocarranza/Documents/Documentos/2026/IngeDeSoft3/ingsoft3-turnos/backend/Turnos.Api/Services/ScheduleService.cs": {
+      "Turnos.Api.Services.ScheduleService": {
+        "System.Boolean Turnos.Api.Services.ScheduleService::IsSlotValid(System.DateTime)": {
+          "Lines": {
+            "16": 20,
+            "17": 20,
+            "18": 1,
+            "20": 19,
+            "21": 1,
+            "23": 18,
+            "24": 18,
+            "25": 20
+          },
+          "Branches": [
+            {
+              "Line": 17,
+              "Offset": 8,
+              "EndOffset": 10,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 19
+            },
+            {
+              "Line": 17,
+              "Offset": 8,
+              "EndOffset": 22,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            },
+            {
+              "Line": 17,
+              "Offset": 25,
+              "EndOffset": 27,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 17,
+              "Offset": 25,
+              "EndOffset": 31,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 19
+            },
+            {
+              "Line": 20,
+              "Offset": 59,
+              "EndOffset": 61,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 20,
+              "Offset": 59,
+              "EndOffset": 65,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 18
+            }
+          ]
+        },
+        "System.Collections.Generic.IReadOnlyList`1<System.TimeOnly> Turnos.Api.Services.ScheduleService::GetDaySlots(System.DateOnly)": {
+          "Lines": {
+            "28": 8,
+            "29": 8,
+            "30": 2,
+            "32": 6,
+            "33": 6,
+            "35": 174,
+            "36": 168,
+            "37": 168,
+            "38": 168,
+            "39": 168,
+            "41": 6,
+            "42": 8
+          },
+          "Branches": [
+            {
+              "Line": 29,
+              "Offset": 29,
+              "EndOffset": 31,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 29,
+              "Offset": 29,
+              "EndOffset": 39,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 6
+            },
+            {
+              "Line": 35,
+              "Offset": 128,
+              "EndOffset": 59,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 168
+            },
+            {
+              "Line": 35,
+              "Offset": 128,
+              "EndOffset": 130,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 6
+            }
+          ]
+        },
+        "System.Boolean Turnos.Api.Services.ScheduleService::IsSlotStartTime(System.TimeOnly)": {
+          "Lines": {
+            "45": 18,
+            "46": 18,
+            "48": 18,
+            "49": 3,
+            "51": 15,
+            "52": 15,
+            "53": 18
+          },
+          "Branches": [
+            {
+              "Line": 48,
+              "Offset": 44,
+              "EndOffset": 46,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 17
+            },
+            {
+              "Line": 48,
+              "Offset": 44,
+              "EndOffset": 64,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            },
+            {
+              "Line": 48,
+              "Offset": 69,
+              "EndOffset": 71,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 3
+            },
+            {
+              "Line": 48,
+              "Offset": 69,
+              "EndOffset": 76,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 15
+            }
+          ]
+        },
+        "System.Void Turnos.Api.Services.ScheduleService::.ctor(Microsoft.Extensions.Options.IOptions`1<Turnos.Api.Options.BusinessHoursOptions>)": {
+          "Lines": {
+            "10": 36,
+            "11": 36,
+            "12": 36,
+            "13": 36
+          },
+          "Branches": []
+        }
+      }
+    },
+    "/Users/santiagocarranza/Documents/Documentos/2026/IngeDeSoft3/ingsoft3-turnos/backend/Turnos.Api/Dtos/AppointmentDtos.cs": {
+      "Turnos.Api.Dtos.CreateAppointmentDto": {
+        "System.String Turnos.Api.Dtos.CreateAppointmentDto::get_CitizenName()": {
+          "Lines": {
+            "10": 38
+          },
+          "Branches": []
+        },
+        "System.String Turnos.Api.Dtos.CreateAppointmentDto::get_NationalId()": {
+          "Lines": {
+            "13": 38
+          },
+          "Branches": []
+        },
+        "System.DateTime Turnos.Api.Dtos.CreateAppointmentDto::get_ScheduledAt()": {
+          "Lines": {
+            "16": 62
+          },
+          "Branches": []
+        },
+        "System.String Turnos.Api.Dtos.CreateAppointmentDto::get_ServiceType()": {
+          "Lines": {
+            "19": 49
+          },
+          "Branches": []
+        }
+      },
+      "Turnos.Api.Dtos.AppointmentResponseDto": {
+        "System.Int32 Turnos.Api.Dtos.AppointmentResponseDto::get_Id()": {
+          "Lines": {
+            "25": 36
+          },
+          "Branches": []
+        },
+        "System.String Turnos.Api.Dtos.AppointmentResponseDto::get_CitizenName()": {
+          "Lines": {
+            "26": 61
+          },
+          "Branches": []
+        },
+        "System.String Turnos.Api.Dtos.AppointmentResponseDto::get_NationalId()": {
+          "Lines": {
+            "27": 52
+          },
+          "Branches": []
+        },
+        "System.DateTime Turnos.Api.Dtos.AppointmentResponseDto::get_ScheduledAt()": {
+          "Lines": {
+            "28": 26
+          },
+          "Branches": []
+        },
+        "System.String Turnos.Api.Dtos.AppointmentResponseDto::get_ServiceType()": {
+          "Lines": {
+            "29": 52
+          },
+          "Branches": []
+        },
+        "System.String Turnos.Api.Dtos.AppointmentResponseDto::get_Status()": {
+          "Lines": {
+            "30": 55
+          },
+          "Branches": []
+        },
+        "System.DateTime Turnos.Api.Dtos.AppointmentResponseDto::get_CreatedAt()": {
+          "Lines": {
+            "31": 26
+          },
+          "Branches": []
+        },
+        "Turnos.Api.Dtos.AppointmentResponseDto Turnos.Api.Dtos.AppointmentResponseDto::FromEntity(Turnos.Api.Models.Appointment)": {
+          "Lines": {
+            "33": 26,
+            "34": 26,
+            "35": 26,
+            "36": 26,
+            "37": 26,
+            "38": 26,
+            "39": 26,
+            "40": 26,
+            "41": 26,
+            "42": 26
+          },
+          "Branches": []
+        }
+      },
+      "Turnos.Api.Dtos.ErrorResponseDto": {
+        "System.String Turnos.Api.Dtos.ErrorResponseDto::get_Error()": {
+          "Lines": {
+            "48": 22
+          },
+          "Branches": []
+        },
+        "System.Void Turnos.Api.Dtos.ErrorResponseDto::.ctor(System.String)": {
+          "Lines": {
+            "50": 20
+          },
+          "Branches": []
+        }
+      }
+    },
+    "/Users/santiagocarranza/Documents/Documentos/2026/IngeDeSoft3/ingsoft3-turnos/backend/Turnos.Api/Dtos/AvailableSlotDto.cs": {
+      "Turnos.Api.Dtos.AvailableSlotDto": {
+        "System.TimeOnly Turnos.Api.Dtos.AvailableSlotDto::get_StartTime()": {
+          "Lines": {
+            "6": 280
+          },
+          "Branches": []
+        },
+        "System.Boolean Turnos.Api.Dtos.AvailableSlotDto::get_Available()": {
+          "Lines": {
+            "7": 173
+          },
+          "Branches": []
+        }
+      }
+    },
+    "/Users/santiagocarranza/Documents/Documentos/2026/IngeDeSoft3/ingsoft3-turnos/backend/Turnos.Api/Controllers/AppointmentsController.cs": {
+      "Turnos.Api.Controllers.AppointmentsController": {
+        "System.Void Turnos.Api.Controllers.AppointmentsController::.ctor(Turnos.Api.Data.AppointmentsDbContext,Turnos.Api.Services.IScheduleService)": {
+          "Lines": {
+            "17": 21,
+            "18": 21,
+            "19": 21,
+            "20": 21,
+            "21": 21
+          },
+          "Branches": []
+        }
+      },
+      "Turnos.Api.Controllers.AppointmentsController/<Cancel>d__6": {
+        "System.Void Turnos.Api.Controllers.AppointmentsController/<Cancel>d__6::MoveNext()": {
+          "Lines": {
+            "158": 4,
+            "159": 4,
+            "160": 4,
+            "161": 1,
+            "163": 3,
+            "164": 1,
+            "165": 1,
+            "166": 1,
+            "169": 2,
+            "170": 2,
+            "172": 2,
+            "173": 4
+          },
+          "Branches": [
+            {
+              "Line": 160,
+              "Offset": 198,
+              "EndOffset": 200,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 160,
+              "Offset": 198,
+              "EndOffset": 284,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 3
+            },
+            {
+              "Line": 163,
+              "Offset": 302,
+              "EndOffset": 304,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 163,
+              "Offset": 302,
+              "EndOffset": 337,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 2
+            }
+          ]
+        }
+      },
+      "Turnos.Api.Controllers.AppointmentsController/<Confirm>d__5": {
+        "System.Void Turnos.Api.Controllers.AppointmentsController/<Confirm>d__5::MoveNext()": {
+          "Lines": {
+            "117": 8,
+            "118": 8,
+            "119": 8,
+            "120": 1,
+            "122": 7,
+            "123": 1,
+            "124": 1,
+            "125": 1,
+            "128": 6,
+            "129": 6,
+            "130": 6,
+            "131": 6,
+            "132": 6,
+            "134": 6,
+            "135": 1,
+            "136": 1,
+            "137": 1,
+            "140": 5,
+            "143": 5,
+            "144": 5,
+            "145": 5,
+            "146": 0,
+            "147": 0,
+            "148": 0,
+            "149": 0,
+            "152": 5,
+            "153": 8
+          },
+          "Branches": [
+            {
+              "Line": 119,
+              "Offset": 258,
+              "EndOffset": 260,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 119,
+              "Offset": 258,
+              "EndOffset": 349,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 7
+            },
+            {
+              "Line": 122,
+              "Offset": 372,
+              "EndOffset": 374,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 122,
+              "Offset": 372,
+              "EndOffset": 469,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 6
+            },
+            {
+              "Line": 134,
+              "Offset": 982,
+              "EndOffset": 984,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 134,
+              "Offset": 982,
+              "EndOffset": 1017,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 5
+            }
+          ]
+        }
+      },
+      "Turnos.Api.Controllers.AppointmentsController/<Create>d__4": {
+        "System.Void Turnos.Api.Controllers.AppointmentsController/<Create>d__4::MoveNext()": {
+          "Lines": {
+            "73": 14,
+            "74": 14,
+            "75": 1,
+            "76": 1,
+            "77": 1,
+            "80": 13,
+            "81": 2,
+            "82": 2,
+            "83": 2,
+            "86": 11,
+            "87": 11,
+            "88": 11,
+            "89": 11,
+            "91": 11,
+            "92": 1,
+            "93": 1,
+            "94": 1,
+            "97": 10,
+            "98": 10,
+            "99": 10,
+            "100": 10,
+            "101": 10,
+            "102": 10,
+            "103": 10,
+            "104": 10,
+            "105": 10,
+            "107": 10,
+            "108": 10,
+            "110": 10,
+            "111": 10,
+            "112": 14
+          },
+          "Branches": [
+            {
+              "Line": 74,
+              "Offset": 85,
+              "EndOffset": 87,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 74,
+              "Offset": 85,
+              "EndOffset": 120,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 13
+            },
+            {
+              "Line": 80,
+              "Offset": 157,
+              "EndOffset": 159,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 80,
+              "Offset": 157,
+              "EndOffset": 192,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 11
+            },
+            {
+              "Line": 91,
+              "Offset": 637,
+              "EndOffset": 639,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 91,
+              "Offset": 637,
+              "EndOffset": 672,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 10
+            }
+          ]
+        }
+      },
+      "Turnos.Api.Controllers.AppointmentsController/<List>d__3": {
+        "System.Void Turnos.Api.Controllers.AppointmentsController/<List>d__3::MoveNext()": {
+          "Lines": {
+            "30": 8,
+            "31": 8,
+            "33": 8,
+            "34": 2,
+            "35": 2,
+            "36": 1,
+            "37": 1,
+            "39": 1,
+            "40": 1,
+            "42": 7,
+            "43": 1,
+            "44": 1,
+            "45": 1,
+            "46": 1,
+            "47": 1,
+            "49": 7,
+            "50": 1,
+            "51": 1,
+            "52": 1,
+            "54": 7,
+            "55": 3,
+            "56": 3,
+            "57": 3,
+            "58": 3,
+            "59": 3,
+            "60": 3,
+            "62": 7,
+            "63": 7,
+            "64": 7,
+            "65": 7,
+            "67": 7,
+            "68": 8
+          },
+          "Branches": [
+            {
+              "Line": 33,
+              "Offset": 89,
+              "EndOffset": 94,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 35,
+              "Offset": 134,
+              "EndOffset": 136,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 35,
+              "Offset": 134,
+              "EndOffset": 184,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 1
+            },
+            {
+              "Line": 33,
+              "Offset": 89,
+              "EndOffset": 340,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 7
+            },
+            {
+              "Line": 42,
+              "Offset": 355,
+              "EndOffset": 360,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 42,
+              "Offset": 355,
+              "EndOffset": 670,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 7
+            },
+            {
+              "Line": 49,
+              "Offset": 693,
+              "EndOffset": 695,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 1
+            },
+            {
+              "Line": 49,
+              "Offset": 693,
+              "EndOffset": 815,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 7
+            },
+            {
+              "Line": 54,
+              "Offset": 833,
+              "EndOffset": 838,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 3
+            },
+            {
+              "Line": 54,
+              "Offset": 833,
+              "EndOffset": 1164,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 7
+            }
+          ]
+        }
+      }
+    },
+    "/Users/santiagocarranza/Documents/Documentos/2026/IngeDeSoft3/ingsoft3-turnos/backend/Turnos.Api/Controllers/AvailableSlotsController.cs": {
+      "Turnos.Api.Controllers.AvailableSlotsController": {
+        "System.Void Turnos.Api.Controllers.AvailableSlotsController::.ctor(Turnos.Api.Data.AppointmentsDbContext,Turnos.Api.Services.IScheduleService)": {
+          "Lines": {
+            "17": 6,
+            "18": 6,
+            "19": 6,
+            "20": 6,
+            "21": 6
+          },
+          "Branches": []
+        }
+      },
+      "Turnos.Api.Controllers.AvailableSlotsController/<>c__DisplayClass3_0": {
+        "Turnos.Api.Dtos.AvailableSlotDto Turnos.Api.Controllers.AvailableSlotsController/<>c__DisplayClass3_0::<List>b__0(System.TimeOnly)": {
+          "Lines": {
+            "46": 146,
+            "47": 146,
+            "48": 146,
+            "49": 146,
+            "50": 146
+          },
+          "Branches": []
+        }
+      },
+      "Turnos.Api.Controllers.AvailableSlotsController/<List>d__3": {
+        "System.Void Turnos.Api.Controllers.AvailableSlotsController/<List>d__3::MoveNext()": {
+          "Lines": {
+            "28": 6,
+            "29": 6,
+            "31": 6,
+            "32": 6,
+            "34": 6,
+            "35": 6,
+            "36": 6,
+            "37": 6,
+            "38": 6,
+            "39": 6,
+            "40": 6,
+            "42": 6,
+            "43": 6,
+            "44": 6,
+            "52": 6,
+            "53": 6
+          },
+          "Branches": []
+        }
+      }
+    }
+  }
+}

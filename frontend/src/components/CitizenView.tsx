@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AppointmentForm from './AppointmentForm'
 import { SERVICES } from '../services'
 import { formatDate, formatTime, formatNationalId, formatStatus } from '../format'
+import { whenIs } from '../agenda'
 import type { Appointment } from '../types'
 
 type Step =
@@ -28,6 +29,8 @@ export default function CitizenView() {
           <dd>{formatDate(appointment.scheduledAt)}</dd>
           <dt>Hora</dt>
           <dd>{formatTime(appointment.scheduledAt)}</dd>
+          <dt>Cuándo</dt>
+          <dd>{whenIs(appointment.scheduledAt)}</dd>
           <dt>Estado</dt>
           <dd>{formatStatus(appointment.status)}</dd>
         </dl>

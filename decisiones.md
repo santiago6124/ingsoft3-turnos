@@ -536,3 +536,255 @@ Cómo se verificó:
 - **La protección se leyó después de escribirla** (`gh api .../branches/main/protection`), porque el
   `PUT` **reescribe la protección entera** en vez de agregarle una línea: había que confirmar que lo
   configurado en el TP1 (cero aprobaciones y `enforce_admins`) siguiera en pie.
+
+## TP5 — Calidad automatizada: tests, coverage y el umbral que frena un merge
+
+**Enlaces del TP5**
+
+| Lo que prueba | Enlace |
+|---|---|
+| La secuencia completa: verde → código sin tests → rojo por cobertura → tests → verde → merge | [PR #31](https://github.com/santiago6124/ingsoft3-turnos/pull/31) |
+| Las dos tablas de cobertura en el Summary y los dos reportes descargables | [corrida en `main` después del merge](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/39317233556) |
+| La corrida **roja por umbral**, con los 27 tests en verde en el mismo log | [corrida del PR #31](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/39316641178) |
+| El freno vigente: **abierto y en rojo hasta la defensa** | [PR #32](https://github.com/santiago6124/ingsoft3-turnos/pull/32) · [su corrida](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/39317361735) |
+
+**Cómo lo trabajé.** Antes de tocar código escribí la spec del práctico en
+[`specs/tp5-calidad/`](specs/tp5-calidad/): qué tiene que ser verdad al terminar
+([`spec.md`](specs/tp5-calidad/spec.md)), cómo se cumple cada requisito
+([`plan.md`](specs/tp5-calidad/plan.md)) y en qué orden, con la comprobación de cada paso
+([`tasks.md`](specs/tp5-calidad/tasks.md)). El primer commit del PR #31 es esa spec. La uso así en
+los TPs que siguen: un práctico por día, y cada uno arranca por su spec.
+
+### 1. Qué lógica testeé y por qué ésa
+
+Medí antes de escribir un solo test. El backend tenía 18 tests, y cubrían bien la grilla horaria y el
+alta de turnos. Pero el reporte mostró **dos agujeros completos**: el listado con filtros del panel de
+admin (`AppointmentsController.List`, 0 de 32 líneas) y los horarios disponibles que ve el ciudadano
+(`AvailableSlotsController`, 0 de 26). Ahí duele un bug en esta app. Si los horarios disponibles se
+equivocan, al ciudadano le aparece libre un horario que ya está confirmado, y se entera cuando el alta
+lo rechaza. Si un filtro del listado se equivoca, el admin confirma el turno equivocado.
+
+La suite quedó en **37 tests de backend sobre cinco reglas** y **36 de frontend**:
+
+| Regla | Tests | Lo que verifican |
+|---|---|---|
+| Grilla horaria | `ScheduleServiceTests` | Un `[Theory]` con los siete bordes de la grilla (8:45, 9:00, 9:05, 9:15, 9:15:30, 15:45, 16:00), fin de semana, grilla completa del día |
+| Horarios disponibles | `AvailableSlotsControllerTests` | Sólo un turno **confirmado** ocupa su horario (un `[Theory]` con pendiente y cancelado); otro trámite no lo ocupa; día no hábil vacío |
+| Filtros del listado | `AppointmentsListTests` | Estado inválido da 400 con los valores permitidos (caso de error); el filtro de fecha toma el día entero y **nada de la medianoche siguiente**; búsqueda por nombre o DNI (`[Theory]`) |
+| Alta y transiciones | `AppointmentsControllerTests` | Futuro, alineado a la grilla, conflicto por trámite, confirmar, cancelar, 404 |
+| Interacción con la grilla | `AppointmentsControllerMockTests` | El mock (sección 5) |
+| Front: contrato con la API | `api.test.ts` | `it.each` con el método y la URL de cada endpoint; la query de filtros; el error de la API llega con su mensaje; 204 sin cuerpo |
+| Front: cuándo es el turno | `agenda.test.ts` | Un caso por cada camino de `whenIs`, con los bordes de día y de semana |
+
+**El criterio para saber si un test vale**, comprobado y no supuesto. Invertí a mano cinco reglas,
+corrí la suite y volví el código atrás:
+
+| Cambio en el código | Qué se puso en rojo |
+|---|---|
+| `slotEndTime <= EndTime` → `<` en la grilla | la fila 15:45 del `[Theory]` |
+| Sacar `Status == Confirmed` de los horarios disponibles | las dos filas (pendiente y cancelado) |
+| `ScheduledAt < to` → `<=` en el filtro de fecha | el test de la medianoche |
+| Sacar la consulta a la grilla en `Create` | el test con mock y el del horario desalineado |
+| Ignorar el `error` que manda la API en `request` | el caso de error del front |
+
+### 2. El umbral: 90 % en líneas y en ramas, de los dos lados
+
+| | Medido en `main` | Umbral | Dónde está |
+|---|---|---|---|
+| Backend | **97,88 % de líneas** (185 de 189) · **100 % de ramas** (40 de 40) | 90 / 90 | `backend/Dockerfile`, etapa `test`: `/p:Threshold=90`, `/p:ThresholdType=line%2cbranch` |
+| Frontend | **100 % de líneas** (128 de 128) · **100 % de ramas** (45 de 45) | 90 / 90 | `frontend/vite.config.ts`: `thresholds: { lines: 90, branches: 90 }` |
+
+**Por qué 90 y no lo que medí.** Un umbral pegado al número real (97 o 100) rompe con cualquier cambio
+legítimo, por ejemplo una línea defensiva nueva, y la reacción del equipo termina siendo bajarlo o
+escribir tests para la métrica. 90 deja unos ocho puntos de margen en el backend, y el PR #32
+demuestra que alcanza para frenar: una clase de 22 líneas sin tests ya lo rompe.
+
+**Por qué también en ramas.** La línea es la métrica que más miente: una línea con un `if` cuenta
+como cubierta aunque sólo se haya recorrido uno de sus caminos. Y lo vi en mi propio PR #32: **por
+líneas el backend cayó a 89,8 %, a dos décimas del umbral**. Una clase apenas más chica pasaba. Por
+ramas cayó a 80 %. En el frontend pasa lo contrario: vitest 2.1.9 no cuenta las ramas de una función
+que nadie llama, así que ahí frena por líneas (sección 4). Con umbral en las dos métricas, frena la
+que quede corta.
+
+**Cómo lo evalúa coverlet.** Por defecto mira el mínimo por ensamblado (`ThresholdStat=minimum`). Mido
+un solo ensamblado (`Turnos.Api`; el de tests no se instrumenta), así que el mínimo y el total son el
+mismo número y no hizo falta cambiarlo.
+
+**Qué pasaría si mañana lo subo diez puntos, a 100.** El backend fallaría siempre: las cuatro líneas
+que faltan son el `catch (DbUpdateException)` de `Confirm` (sección 6), y ningún unit test puede llegar
+ahí. Para pasar habría que excluir ese código del cálculo o escribir un test que fuerce la excepción
+con un doble, y en los dos casos se termina midiendo lo que conviene medir. Para subir el umbral de
+verdad primero hay que cubrir ese camino con un test de integración contra Postgres (TP7).
+
+### 3. Qué dejé fuera de la cuenta, y por qué
+
+**Backend.** Es la misma lista en el umbral (`/p:Exclude` del Dockerfile) y en el reporte
+(`-classfilters` del `ci.yml`). Lo comprobé en el Summary: el reporte dice 185 de 189, igual que
+coverlet.
+
+| Afuera | Por qué |
+|---|---|
+| `Program` | El arranque: inyección de dependencias, CORS, migraciones al iniciar. Se prueba levantando la app (`/health` en 200), no con un unit test |
+| `Turnos.Api.Migrations.*` | Código **generado** por EF Core. Testearlo es testear EF |
+| `Turnos.Api.Data.*` | El `DbContext`: configuración, no lógica |
+| `Turnos.Api.Models.*`, `Turnos.Api.Options.*` | Clases que sólo tienen propiedades |
+
+Midiendo todo, la cobertura daba 39 %: el número quedaba hundido por el arranque y las migraciones, y
+no decía nada de mi lógica. Dejé los **DTOs adentro** a propósito: `AppointmentResponseDto.FromEntity`
+convierte el estado a texto, y el front depende de ese texto.
+
+Usé `Exclude` (lo que se saca) y no `Include` (lo que se deja). Con `Exclude`, una clase nueva entra
+sola a la cuenta. El PR #32 lo demuestra: `ReminderPolicy` no está nombrada en ningún lado y bajó el
+número igual. Con `Include`, habría nacido invisible para el umbral.
+
+**Frontend.** `include: ['src/*.ts']`, sin los `*.test.ts` ni los `*.d.ts`. Entran los módulos de
+lógica (`api.ts`, `format.ts`, `services.ts`, `agenda.ts`). Quedan afuera los componentes `.tsx`: son
+UI y su test (`AdminView.test.tsx`) necesita DOM. Si los midiera, el número diría cuánto renderizo y no
+cuánta lógica verifico. `types.ts` aparece en el reporte con 0 de 0: son sólo interfaces de TypeScript
+y no generan código. Como el `include` es un patrón y no una lista, un `.ts` nuevo entra sin tocar
+nada (es lo que le pasó a `agenda.ts` en el PR #31).
+
+### 4. El Pull Request bloqueado
+
+En el **PR #31**, después de la primera corrida en verde, subí `src/agenda.ts`: `whenIs`, la función
+que le dice al ciudadano en la confirmación cuándo es su turno («Hoy», «Mañana», «En 3 días»), sin
+tests.
+
+- **Qué se puso en rojo**: `build-frontend`, que es required check de `main` desde el TP4. El
+  `build-backend` siguió verde porque el código nuevo no estaba ahí.
+- **En qué métrica**: líneas. El log de la [corrida roja](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/39316641178)
+  dice `Tests 27 passed (27)` y abajo `ERROR: Coverage for lines (80.46%) does not meet global
+  threshold (90%)`. Las ramas apenas bajaron (96,87 %): en **vitest 2.1.9** una función que ningún
+  test llama no suma ramas, sólo líneas sin cubrir.
+- **Por qué no se podía mergear si compilaba y pasaba todo**: el job no mide sólo si anda, también
+  mide cuánto de lo que se agregó está verificado. 37 líneas nuevas sin un test bajan la proporción
+  debajo del número que elegí, y el job sale con error aunque no haya ninguno en el código.
+- **Qué escribí para arreglarlo**: un caso por cada camino que declara `whenIs`, más los bordes entre
+  ellos. Son nueve tests: fecha ilegible, ya pasó, hoy, mañana (a las 20 h del día anterior, que son
+  menos de 24 horas), 2 días, **6 días** (el último que se cuenta en días), **7 días** (ya es «una
+  semana»), 13 días y 3 semanas. `now` entra por parámetro para que el resultado no dependa del reloj.
+  Volvió al 100 %, la [corrida](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/39316940723)
+  quedó verde y lo mergeé.
+
+**El freno vigente es el PR #32**, del lado del backend: `ReminderPolicy`, una regla con cinco
+decisiones y sin tests. Los 37 tests pasan y `build-backend` falla con *The minimum line coverage is
+below the specified 90* y *The minimum branch coverage is below the specified 90*. Queda abierto y en
+rojo hasta la defensa.
+
+**Por qué este freno es distinto del del TP4.** El del TP4 frena lo que **no anda** (no compila, no
+construye la imagen). Éste frena lo que **anda pero nadie verificó**. Es la primera vez que me frena un
+criterio que elegí yo y no la máquina diciendo «esto está roto». **Qué deja pasar igual**: un test
+que ejecuta el código sin verificar lo que importa (sección 5), lógica que está mal y tiene un test
+que confirma el error, y todo lo que no se mide por líneas (UI, rendimiento, seguridad).
+
+### 5. Por qué coverage alto no es calidad, con mi ejemplo
+
+`AppointmentResponseDto.FromEntity` está cubierto al 100 %: lo ejecutan casi todos los tests de
+controller. Hice la prueba de cambiar `CreatedAt = a.CreatedAt` por `CreatedAt = a.ScheduledAt`, un bug
+real: el front mostraría como fecha de alta la fecha del turno. **Los 37 tests pasaron y la cobertura
+no se movió: 97,88 % y 100 %**. La línea se ejecuta, pero ningún assert mira qué escribe. La cobertura
+dice qué código **corrió**, no qué código **se verificó**. Un test sin asserts sumaría la misma
+cobertura.
+
+### 6. El ejercicio del camino sin cubrir
+
+Con la suite nueva, el reporte marcaba una sola rama naranja en el backend:
+
+1. **Qué línea es**: `AppointmentsController.cs`, línea 119, `if (appointment is null)` dentro de
+   `Confirm`. Se ejecutaba siempre por el lado de «lo encontró». El camino del `return NotFound(...)`
+   no lo recorría ningún test (lo mismo en `Cancel`, línea 160).
+2. **Qué entrada la recorre**: un id que no existe. Concretamente, `Confirm(999)` sobre una base vacía.
+3. **Qué decidí**: **agregar los tests** (`Confirm_UnknownId_ReturnsNotFound` y
+   `Cancel_UnknownId_ReturnsNotFound`). El 404 es parte del contrato de la API, y si se rompiera, el
+   front mostraría «Error 500» en vez de «No existe el turno». Con eso las ramas quedaron en 40 de 40.
+
+**Lo que sigue sin cubrir, y lo dejo así a propósito**: las líneas 146 a 149, el
+`catch (DbUpdateException)` de `Confirm`. Se recorre cuando dos admins confirman a la vez dos turnos
+del mismo horario, el chequeo previo pasa para los dos y el índice único parcial de Postgres rechaza el
+segundo. Con el proveedor InMemory de los tests no se puede recorrer, porque **no aplica índices**.
+Forzarlo con un doble que tire la excepción probaría que sé escribir un `catch`, no que el índice
+existe. Es un test de integración contra Postgres real, y va en el TP7.
+
+### 7. El mock, y el refactor que lo hizo posible
+
+**Backend: no hizo falta refactorizar.** `AppointmentsController` ya recibía `IScheduleService` por
+constructor desde el TP2. El test `Create_GridRejectsTheSlot_ReturnsBadRequestAndSavesNothing` le
+pasa un doble de Moq:
+
+- **Arrange**: `Setup(g => g.IsSlotValid(It.IsAny<DateTime>())).Returns(false)`. Hasta acá es un
+  **stub**: una respuesta preparada.
+- **Assert**: además del 400 y su mensaje, `Verify(g => g.IsSlotValid(scheduledAt), Times.Once)` (el
+  controller le preguntó a la grilla, una vez, por la fecha exacta que recibió) y que la base siga
+  vacía. Verificar la **interacción** es lo que lo hace un **mock** y no un stub.
+
+Los otros tests del controller usan el `ScheduleService` **real**, así que prueban controller y grilla
+juntos. Éste aísla el controller.
+
+**Lo que sí encontré y no refactoricé**: `Create` lee `DateTime.Now` adentro. Por eso los tests de
+alta necesitan el truco `NextThursdayAt` (calcular «el próximo jueves» para que la fecha siempre sea
+futura y hábil). La salida correcta es inyectar un `TimeProvider`. No entra en este TP porque tocaría
+todos los tests de alta. Lo dejo anotado como deuda.
+
+**Frontend: sí hubo refactor.** `request()` de `src/api.ts` usaba el `fetch` global, y no había por
+dónde meterle un doble sin salir a la red. Ahora recibe el cliente como parámetro opcional
+(`fetcher: Fetcher = fetch`), igual que las funciones de cada endpoint. Los componentes no cambiaron:
+no lo pasan y siguen usando el `fetch` del navegador. Los tests le pasan un `vi.fn()` que contesta lo
+que cada caso necesita, y verifican la URL y el método que recibió. De paso separé
+`buildAppointmentsQuery(filters)`, que arma la query de los filtros: era lógica pura pegada a la red,
+y ahora se prueba con `it.each` sin doble.
+
+Comprobé que el refactor no rompió nada en la app real: `docker compose up --build`, `/health` en 200
+y `GET /api/available-slots` a través de nginx en 200.
+
+### 8. Problemas encontrados y cómo los resolví
+
+- **El umbral del front me frenó antes del PR de demostración.** En la primera medición local dio
+  86,4 % de líneas contra 90, con todos los tests en verde. Lo que faltaba eran las funciones de cada
+  endpoint (`confirmAppointment`, `cancelAppointment`...), envoltorios de una línea. Pensé en
+  excluirlas, pero son justamente el contrato con el backend: un `/confirm` en vez de `/confirmar`
+  compila, pasa todo lo demás y rompe la app. Les agregué el `fetcher` y un `it.each` con el método y
+  la URL de cada una.
+- **La carpeta de resultados salía vacía en local.** El `docker run` con
+  `-v /private/tmp/...:/out` corría los tests en verde, pero no aparecía ningún archivo afuera. Es el
+  mismo problema de colima del TP2: sólo comparte `$HOME` con la máquina virtual, y un volumen fuera
+  de ahí se monta como una carpeta vacía **sin dar error**. Lo resolví montando una carpeta dentro del
+  repo (ignorada por `.gitignore`). En el runner de GitHub no pasa.
+- **Por líneas, el PR #32 casi no frena.** La primera versión de `ReminderPolicy` dejaba el backend en
+  89,8 %, dos décimas debajo del umbral. Frena con firmeza por ramas (80 %). Lo dejo así porque es la
+  mejor prueba de por qué el umbral mira las dos métricas.
+- **Las versiones de las actions.** La guía usa `docker/build-push-action@v7` y
+  `actions/upload-artifact@v6`. Mantuve `build-push-action@v6`, la que ya usaba el workflow desde el
+  TP4, para no mezclar en el mismo PR una actualización de versiones con el cambio de este práctico.
+  `upload-artifact@v6` existe y la usé como está en la guía.
+- **Se coló un reporte en el repositorio.** `coverlet.msbuild` deja un `coverage.json` dentro del
+  proyecto de tests cada vez que corro el umbral en local, y entró en un commit del PR #31 con un
+  `git add` de la carpeta entera. Lo saqué del índice y lo agregué al `.gitignore` y al
+  `.dockerignore` del backend. En el `.dockerignore` también importa: un archivo que cambia en cada
+  corrida dentro del contexto invalida el cache del `COPY . .` en cada build.
+- **Que los tests de fechas no dependan de la zona horaria.** El contenedor del CI corre en UTC y mi
+  máquina en hora de Argentina. `agenda.test.ts` arma las fechas en hora local de los dos lados y
+  cuenta días de calendario. Lo corrí también con `TZ=UTC` antes de pushear, y dio igual.
+
+### 9. Declaración de uso de IA
+
+**El TP5 lo hice con asistencia de IA** (Claude Code, modelo Claude Opus 5.5), con la IA operando
+`dotnet`, `npm`, `docker`, `git` y `gh` bajo mi indicación. La IA redactó la spec a partir del
+enunciado y de la medición inicial, escribió los tests, el refactor de `api.ts`, las etapas de los
+Dockerfiles, los pasos del workflow y el borrador de este archivo. Yo decidí qué reglas importaban en
+mi app, el umbral y las exclusiones, y revisé cada test contra la pregunta que pide el enunciado: qué
+verifica cada assert y qué caso no cubre.
+
+Cómo lo verifiqué:
+- **Cada test se comprobó rompiendo el código, no leyéndolo**: las cinco mutaciones de la sección 1,
+  cada una con su test en rojo, y el código restaurado después (`git diff` vacío).
+- **El umbral se comprobó en los dos sentidos antes de subirlo**: con `Threshold=99` el backend sale
+  con error y los 37 tests en verde; con 90 pasa. En el front, el mismo rojo apareció solo (sección 8).
+- **El reporte y el umbral miden lo mismo**: ReportGenerator dice 185 de 189 líneas y coverlet dice
+  97,88 %, que es 185/189.
+- **Las corridas se miraron en el log**, no en el color del check: la roja del PR #31 dice
+  `27 passed` y el `ERROR: Coverage for lines`; la del PR #32, `Passed: 37` y los dos errores de
+  coverlet.
+- **La app se levantó después del refactor** (sección 7), porque los tests pasan igual aunque la
+  inyección real esté rota.
+- **El ejemplo de la sección 5 se ejecutó**, no se razonó: el cambio de `CreatedAt` con la suite y la
+  cobertura medidas.

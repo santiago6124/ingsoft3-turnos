@@ -52,26 +52,26 @@ export function buildAppointmentsQuery(filters: AppointmentFilters = {}): string
   return query ? `?${query}` : ''
 }
 
-export function listAppointments(filters: AppointmentFilters = {}): Promise<Appointment[]> {
-  return request<Appointment[]>(`/turnos${buildAppointmentsQuery(filters)}`)
+export function listAppointments(filters: AppointmentFilters = {}, fetcher?: Fetcher): Promise<Appointment[]> {
+  return request<Appointment[]>(`/turnos${buildAppointmentsQuery(filters)}`, {}, fetcher)
 }
 
-export function createAppointment(appointment: CreateAppointmentInput): Promise<Appointment> {
+export function createAppointment(appointment: CreateAppointmentInput, fetcher?: Fetcher): Promise<Appointment> {
   return request<Appointment>('/turnos', {
     method: 'POST',
     body: JSON.stringify(appointment),
-  })
+  }, fetcher)
 }
 
-export function listAvailableSlots(date: string, serviceType: string): Promise<AvailableSlot[]> {
+export function listAvailableSlots(date: string, serviceType: string, fetcher?: Fetcher): Promise<AvailableSlot[]> {
   const params = new URLSearchParams({ date, serviceType })
-  return request<AvailableSlot[]>(`/available-slots?${params.toString()}`)
+  return request<AvailableSlot[]>(`/available-slots?${params.toString()}`, {}, fetcher)
 }
 
-export function confirmAppointment(id: number): Promise<Appointment> {
-  return request<Appointment>(`/turnos/${id}/confirmar`, { method: 'PUT' })
+export function confirmAppointment(id: number, fetcher?: Fetcher): Promise<Appointment> {
+  return request<Appointment>(`/turnos/${id}/confirmar`, { method: 'PUT' }, fetcher)
 }
 
-export function cancelAppointment(id: number): Promise<Appointment> {
-  return request<Appointment>(`/turnos/${id}/cancelar`, { method: 'PUT' })
+export function cancelAppointment(id: number, fetcher?: Fetcher): Promise<Appointment> {
+  return request<Appointment>(`/turnos/${id}/cancelar`, { method: 'PUT' }, fetcher)
 }

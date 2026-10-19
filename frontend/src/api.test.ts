@@ -2,7 +2,10 @@
 // Unit tests without a DOM: this file only exercises logic, so it runs on plain Node
 // instead of the jsdom the component tests need.
 import { describe, it, expect, vi } from 'vitest'
-import { buildAppointmentsQuery, request, type Fetcher } from './api'
+import {
+  buildAppointmentsQuery, request, type Fetcher,
+  listAppointments, createAppointment, listAvailableSlots, confirmAppointment, cancelAppointment,
+} from './api'
 
 describe('buildAppointmentsQuery', () => {
   it.each([
@@ -57,5 +60,36 @@ describe('request', () => {
     const fetcher = fakeFetch(204)
 
     await expect(request('/turnos/1/cancelar', { method: 'PUT' }, fetcher)).resolves.toBeNull()
+  })
+})
+
+// The contract with the backend: which method and which URL each action uses. A typo
+// here ("/confirm" instead of "/confirmar") compiles, passes every other test, and
+// breaks the app; this table is what catches it.
+describe('endpoints de la API', () => {
+  const turno = { citizenName: 'Ana', nationalId: '1', scheduledAt: '2026-10-22T10:00:00', serviceType: 'Pasaporte' }
+
+  it.each([
+    ['listar con filtros', (f: Fetcher) => listAppointments({ status: 'Pending' }, f), 'GET', '/api/turnos?status=Pending'],
+    ['crear', (f: Fetcher) => createAppointment(turno, f), 'POST', '/api/turnos'],
+    ['horarios disponibles', (f: Fetcher) => listAvailableSlots('2026-10-22', 'Pasaporte', f), 'GET', '/api/available-slots?date=2026-10-22&serviceType=Pasaporte'],
+    ['confirmar', (f: Fetcher) => confirmAppointment(7, f), 'PUT', '/api/turnos/7/confirmar'],
+    ['cancelar', (f: Fetcher) => cancelAppointment(7, f), 'PUT', '/api/turnos/7/cancelar'],
+  ])('%s usa %s %s', async (_accion, llamar, metodo, url) => {
+    const fetcher = fakeFetch(200, {})
+
+    await llamar(fetcher)
+
+    const [urlPedida, init] = fetcher.mock.calls[0]
+    expect(urlPedida).toBe(url)
+    expect(init?.method ?? 'GET').toBe(metodo)
+  })
+
+  it('crear manda el turno como cuerpo JSON', async () => {
+    const fetcher = fakeFetch(201, { id: 1 })
+
+    await createAppointment(turno, fetcher)
+
+    expect(JSON.parse(fetcher.mock.calls[0][1]?.body as string)).toEqual(turno)
   })
 })

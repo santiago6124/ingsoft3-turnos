@@ -11,7 +11,7 @@ justificar se justifican en `decisiones.md`; acá queda el diseño.
 |---|---|---|
 | Grilla horaria | `Services/ScheduleServiceTests.cs` | Los `[Fact]` de validez se pasan a un `[Theory]` con los bordes (R1.2) |
 | Horarios disponibles | `Controllers/AvailableSlotsControllerTests.cs` (nuevo) | Un confirmado ocupa su horario; un pendiente o un cancelado no; otro trámite no ocupa; día no hábil devuelve vacío |
-| Filtros del listado | `Controllers/AppointmentsControllerTests.cs` | Estado inválido da 400 (caso de error); filtro por estado, fecha, trámite y búsqueda por nombre o DNI |
+| Filtros del listado | `Controllers/AppointmentsListTests.cs` (nuevo) | Estado inválido da 400 (caso de error); filtro por estado, fecha, trámite y búsqueda por nombre o DNI |
 | Interacción con la grilla | `Controllers/AppointmentsControllerMockTests.cs` (nuevo) | **Mock** de `IScheduleService` con Moq: si la grilla rechaza, el controller devuelve 400, **no escribe en la base** y consultó la grilla una vez con la fecha exacta (`Verify`) |
 
 No hace falta refactorizar para el mock: `AppointmentsController` ya recibe `IScheduleService` por

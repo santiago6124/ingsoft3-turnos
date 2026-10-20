@@ -155,3 +155,47 @@ jobs:
           tags: ghcr.io/santiago6124/ingsoft3-turnos-frontend:sha-${{ github.sha }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+
+  # ---- TP6: la promoción arranca donde termina la verificación ----
+  deploy-qa:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]     # sin los dos jobs en verde no hay deploy
+    if: github.ref == 'refs/heads/main'        # los PRs verifican; sólo main despliega
+    environment: qa                            # trae los hooks de QA y deja registro en Deployments
+    steps:
+      # El `&ref=` es el corazón del TP: un hook pelado despliega la PUNTA de main, no el commit
+      # que este pipeline acaba de verificar. Con dos merges seguidos, la corrida de A desplegaría
+      # B. Va `&` y no `?` porque la URL del hook ya trae su `?key=`.
+      # (Render igual RECONSTRUYE ese commit desde el repo: se despliega el commit verificado, no
+      # la imagen verificada. Está dicho en decisiones.md y lo resuelve el TP7.)
+      - name: Disparar deploy en Render (api + front) del commit verificado
+        env:
+          HOOK_API: ${{ secrets.RENDER_HOOK_API_QA }}
+          HOOK_FRONT: ${{ secrets.RENDER_HOOK_FRONT_QA }}
+        run: |
+          curl -fsS --max-time 30 "$HOOK_API&ref=$GITHUB_SHA" > /dev/null
+          curl -fsS --max-time 30 "$HOOK_FRONT&ref=$GITHUB_SHA" > /dev/null
+          echo "Pedido a Render: desplegar $GITHUB_SHA"
+
+      # Reintenta porque el free tier tiene contrato: Render construye (1 a 5 min) y un servicio
+      # dormido tarda hasta un minuto en despertar. Un curl seco daría falsos rojos.
+      - name: Smoke test (espera a que QA conteste con ESTE commit)
+        shell: bash
+        env:
+          URL_API: https://turnos-api-qa-ga8a.onrender.com
+          URL_FRONT: https://turnos-front-qa-eo7o.onrender.com
+        run: |
+          for i in $(seq 1 30); do
+            # --max-time en cada curl: un servicio despertando acepta la conexión y no contesta.
+            # Sin tope, curl esperaría hasta que el job muera por el límite del runner.
+            HEALTH=$(curl -fsS --max-time 10 "$URL_API/health" || true)
+            if echo "$HEALTH" | grep -q "\"commit\":\"$GITHUB_SHA\"" \
+               && curl -fsS --max-time 10 "$URL_API/api/turnos" > /dev/null \
+               && curl -fsS --max-time 10 "$URL_FRONT/" > /dev/null \
+               && curl -fsS --max-time 10 "$URL_FRONT/api/turnos" > /dev/null; then
+              echo "✅ QA corre $GITHUB_SHA: api, base y front (y el front llega a SU api)"; exit 0
+            fi
+            echo "vuelta $i: todavía no ($(echo "$HEALTH" | head -c 120))"
+            sleep 20
+          done
+          echo "❌ QA no respondió con $GITHUB_SHA a tiempo"; exit 1

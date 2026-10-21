@@ -37,6 +37,10 @@ export default function App() {
           {view === 'citizen' ? <CitizenView /> : <AdminView />}
         </main>
       </div>
+
+      <footer className="site-footer">
+        Atención presencial de lunes a viernes, de 9 a 16 h. Llegá diez minutos antes de tu turno con tu documento.
+      </footer>
     </div>
   )
 }

@@ -153,6 +153,7 @@ jobs:
           # Sólo un push a main publica. Un PR construye y verifica, pero no sube nada.
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ghcr.io/santiago6124/ingsoft3-turnos-frontend:sha-${{ github.sha }}
+          build-args: GIT_COMMIT=${{ github.sha }}   # queda en /version.txt de la imagen
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -191,11 +192,11 @@ jobs:
             HEALTH=$(curl -fsS --max-time 10 "$URL_API/health" || true)
             if echo "$HEALTH" | grep -q "\"commit\":\"$GITHUB_SHA\"" \
                && curl -fsS --max-time 10 "$URL_API/api/turnos" > /dev/null \
-               && curl -fsS --max-time 10 "$URL_FRONT/" > /dev/null \
+               && [ "$(curl -fsS --max-time 10 "$URL_FRONT/version.txt" || true)" = "$GITHUB_SHA" ] \
                && curl -fsS --max-time 10 "$URL_FRONT/api/turnos" > /dev/null; then
-              echo "✅ QA corre $GITHUB_SHA: api, base y front (y el front llega a SU api)"; exit 0
+              echo "✅ QA corre $GITHUB_SHA: api, base y front y el front construido con ese mismo commit, que llega a SU api)"; exit 0
             fi
-            echo "vuelta $i: todavía no ($(echo "$HEALTH" | head -c 120))"
+            echo "vuelta $i: todavía no (api: $(echo "$HEALTH" | head -c 120) · front: $(curl -fsS --max-time 10 "$URL_FRONT/version.txt" 2>/dev/null | head -c 40))"
             sleep 20
           done
           echo "❌ QA no respondió con $GITHUB_SHA a tiempo"; exit 1
@@ -233,11 +234,11 @@ jobs:
             HEALTH=$(curl -fsS --max-time 10 "$URL_API/health" || true)
             if echo "$HEALTH" | grep -q "\"commit\":\"$GITHUB_SHA\"" \
                && curl -fsS --max-time 10 "$URL_API/api/turnos" > /dev/null \
-               && curl -fsS --max-time 10 "$URL_FRONT/" > /dev/null \
+               && [ "$(curl -fsS --max-time 10 "$URL_FRONT/version.txt" || true)" = "$GITHUB_SHA" ] \
                && curl -fsS --max-time 10 "$URL_FRONT/api/turnos" > /dev/null; then
-              echo "✅ PROD corre $GITHUB_SHA: api, base y front (y el front llega a SU api)"; exit 0
+              echo "✅ PROD corre $GITHUB_SHA: api, base y front y el front construido con ese mismo commit, que llega a SU api)"; exit 0
             fi
-            echo "vuelta $i: todavía no ($(echo "$HEALTH" | head -c 120))"
+            echo "vuelta $i: todavía no (api: $(echo "$HEALTH" | head -c 120) · front: $(curl -fsS --max-time 10 "$URL_FRONT/version.txt" 2>/dev/null | head -c 40))"
             sleep 20
           done
           echo "❌ PROD no respondió con $GITHUB_SHA a tiempo"; exit 1

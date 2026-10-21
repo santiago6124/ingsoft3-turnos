@@ -6,6 +6,14 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
+# El commit con el que se construyó este bundle, servido en /version.txt (TP6). Lo pasa el
+# pipeline (GIT_COMMIT) o Render (RENDER_GIT_COMMIT, que entrega como build arg). El smoke test
+# lo compara con el commit verificado: así detecta un front que quedó viejo aunque el deploy
+# figure como live con el commit nuevo, que ya nos pasó con el cache de build de Render.
+# Va DESPUÉS del build a propósito: un commit nuevo no invalida el cache de npm ci ni el del build.
+ARG GIT_COMMIT
+ARG RENDER_GIT_COMMIT
+RUN echo "${GIT_COMMIT:-${RENDER_GIT_COMMIT:-local}}" > dist/version.txt
 
 # ---- Etapa 2: tests (parte del build: ya tiene Node y las dependencias de desarrollo) ----
 # Va en el medio a propósito: si quedara última, la imagen por defecto sería la de tests.

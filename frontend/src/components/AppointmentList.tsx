@@ -1,4 +1,4 @@
-import { confirmAppointment, cancelAppointment } from '../api'
+import { confirmAppointment, cancelAppointment, deleteAppointment } from '../api'
 import { formatDate, formatTime, formatNationalId, formatStatus } from '../format'
 import { SERVICE_TYPES } from '../services'
 import type { Appointment } from '../types'
@@ -45,6 +45,15 @@ export default function AppointmentList({
     }
   }
 
+  async function handleDelete(id: number) {
+    try {
+      await deleteAppointment(id)
+      onChanged()
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Error desconocido')
+    }
+  }
+
   async function handleCancel(id: number) {
     try {
       await cancelAppointment(id)
@@ -62,19 +71,28 @@ export default function AppointmentList({
         <div className="appointment-list-filters">
           <input
             type="search"
+            aria-label="Buscar por nombre o DNI"
             placeholder="Buscar"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
           />
 
-          <select value={serviceTypeFilter} onChange={(e) => onServiceTypeFilterChange(e.target.value)}>
+          <select
+            aria-label="Filtrar por trámite"
+            value={serviceTypeFilter}
+            onChange={(e) => onServiceTypeFilterChange(e.target.value)}
+          >
             <option value="">Todos los trámites</option>
             {SERVICE_TYPES.map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
 
-          <select value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)}>
+          <select
+            aria-label="Filtrar por estado"
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange(e.target.value)}
+          >
             <option value="">Todos los estados</option>
             <option value="Pending">Pendiente</option>
             <option value="Confirmed">Confirmado</option>
@@ -132,17 +150,28 @@ export default function AppointmentList({
                   </span>
                 </td>
                 <td data-label="Acciones" className="actions">
+                  {/* El aria-label dice DE QUIÉN es cada botón: con varias filas, «Confirmar» solo es
+                      ambiguo para un lector de pantalla (y para las pruebas e2e del TP7). */}
                   <button
                     disabled={a.status !== 'Pending'}
                     onClick={() => handleConfirm(a.id)}
+                    aria-label={`Confirmar turno de ${a.citizenName}`}
                   >
                     Confirmar
                   </button>
                   <button
                     disabled={a.status === 'Cancelled'}
                     onClick={() => handleCancel(a.id)}
+                    aria-label={`Cancelar turno de ${a.citizenName}`}
                   >
                     Cancelar
+                  </button>
+                  <button
+                    className="danger"
+                    onClick={() => handleDelete(a.id)}
+                    aria-label={`Eliminar turno de ${a.citizenName}`}
+                  >
+                    Eliminar
                   </button>
                 </td>
               </tr>

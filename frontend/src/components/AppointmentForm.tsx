@@ -146,14 +146,14 @@ export default function AppointmentForm({ serviceType, onCreated }: AppointmentF
       </label>
 
       {date && !loadingSlots && slots.length === 0 && (
-        <p className="error">No hay turnos habilitados ese día (solo de lunes a viernes).</p>
+        <p className="error" role="alert">No hay turnos habilitados ese día (solo de lunes a viernes).</p>
       )}
 
       {date && !loadingSlots && slots.length > 0 && slots.every((s) => !s.available) && (
-        <p className="error">No quedan horarios libres ese día. Probá con otra fecha.</p>
+        <p className="error" role="alert">No quedan horarios libres ese día. Probá con otra fecha.</p>
       )}
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
 
       <button type="submit" className="form-submit-button" disabled={loading}>
         {loading ? 'Agendando...' : 'Agendar turno'}

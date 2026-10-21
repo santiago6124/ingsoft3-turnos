@@ -1,0 +1,33 @@
+server {
+    listen 80;
+
+    # SPA: estáticos, con fallback a index.html para las rutas del router
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # La dirección del backend y el DNS NO están escritos acá: nginx los lee del entorno al
+    # arrancar (la imagen oficial procesa /etc/nginx/templates/ y reemplaza ${VARIABLE}).
+    # En compose: el nombre del servicio y el DNS interno de Docker (los defaults del
+    # Dockerfile). En Render: la URL de la api de ESTE entorno y un DNS público. Así la misma
+    # imagen sirve en QA y en PROD.
+    #
+    # El backend va en una VARIABLE: con el nombre directo en proxy_pass, nginx lo resuelve
+    # al arrancar y si el backend todavía no existe no levanta («host not found in upstream»).
+    # Con variable, resuelve cuando llega un pedido.
+    resolver ${DNS_RESOLVER} valid=10s ipv6=off;
+    set $backend_api ${BACKEND_URL};
+
+    location /api/ {
+        proxy_pass $backend_api;
+        proxy_ssl_server_name on;   # la api de Render es https: sin esto el TLS no sabe a qué host va
+    }
+
+    # El health check del backend, accesible desde el mismo origen.
+    location /health {
+        proxy_pass $backend_api;
+        proxy_ssl_server_name on;
+    }
+}

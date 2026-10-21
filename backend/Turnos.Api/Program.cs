@@ -55,14 +55,21 @@ app.MapControllers();
 // API igual no poder atender un solo pedido porque perdió la base. Devolver 200 en
 // ese estado es peor que no tener health check — un orquestador lo lee como "sano" y
 // le sigue mandando tráfico.
+//
+// También dice QUÉ commit está corriendo (TP6). Render define RENDER_GIT_COMMIT en cada servicio
+// construido desde git, con el commit que desplegó. El smoke test del pipeline lo compara con el
+// commit que verificó: mientras Render construye, sigue sirviendo la versión anterior, y sin este
+// dato el smoke daría verde contra la versión vieja. Fuera de Render (compose, tests) dice "local".
+var commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT") ?? "local";
+
 app.MapGet("/health", async (AppointmentsDbContext db) =>
 {
     var baseAlcanzable = await db.Database.CanConnectAsync();
 
     return baseAlcanzable
-        ? Results.Ok(new { status = "ok", database = "ok" })
+        ? Results.Ok(new { status = "ok", database = "ok", commit })
         : Results.Json(
-            new { status = "degraded", database = "unreachable" },
+            new { status = "degraded", database = "unreachable", commit },
             statusCode: StatusCodes.Status503ServiceUnavailable);
 });
 

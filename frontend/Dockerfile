@@ -17,6 +17,11 @@ ENTRYPOINT ["npm", "run", "test:ci"]
 # ---- Etapa 3: nginx sirve los estáticos y proxea /api al backend ----
 FROM nginx:alpine AS final
 LABEL org.opencontainers.image.source=https://github.com/santiago6124/ingsoft3-turnos
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Va a templates/ y no a conf.d/: nginx leería conf.d/ tal cual, con los ${…} sin reemplazar.
+COPY default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
+# Los valores de compose, por defecto: el `docker compose up` del TP2 sigue andando sin tocarlo.
+# Render los pisa con las variables de cada servicio.
+ENV BACKEND_URL=http://backend:8080 \
+    DNS_RESOLVER=127.0.0.11
 EXPOSE 80

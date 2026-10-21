@@ -56,11 +56,16 @@ app.MapControllers();
 // ese estado es peor que no tener health check — un orquestador lo lee como "sano" y
 // le sigue mandando tráfico.
 //
-// También dice QUÉ commit está corriendo (TP6). Render define RENDER_GIT_COMMIT en cada servicio
-// construido desde git, con el commit que desplegó. El smoke test del pipeline lo compara con el
-// commit que verificó: mientras Render construye, sigue sirviendo la versión anterior, y sin este
-// dato el smoke daría verde contra la versión vieja. Fuera de Render (compose, tests) dice "local".
-var commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT") ?? "local";
+// También dice QUÉ commit está corriendo. El smoke test del pipeline lo compara con el commit que
+// verificó, y así prueba desde afuera qué imagen corre el entorno.
+//   GIT_COMMIT: grabado en la imagen al construirla en el pipeline (TP7). Viaja con la imagen, así
+//     que es la prueba de que el entorno ejecuta ESA imagen y no una reconstrucción.
+//   RENDER_GIT_COMMIT: lo define Render cuando construye desde el repo (TP6).
+//   "local": compose y tests.
+// Vacía cuenta como ausente: el Dockerfile define GIT_COMMIT siempre, y sin build arg queda "".
+var commit = new[] { "GIT_COMMIT", "RENDER_GIT_COMMIT" }
+    .Select(Environment.GetEnvironmentVariable)
+    .FirstOrDefault(v => !string.IsNullOrEmpty(v)) ?? "local";
 
 app.MapGet("/health", async (AppointmentsDbContext db) =>
 {

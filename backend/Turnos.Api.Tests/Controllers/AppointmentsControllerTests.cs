@@ -224,4 +224,27 @@ public class AppointmentsControllerTests
 
         Assert.IsType<NotFoundObjectResult>(result.Result);
     }
+
+    [Fact]
+    public async Task Delete_ExistingAppointment_RemovesItFromTheList()
+    {
+        var controller = CreateController();
+        var created = ExtractCreated(await controller.Create(ValidDto(NextThursdayAt(15, 0))));
+
+        var result = await controller.Delete(created.Id);
+
+        Assert.IsType<NoContentResult>(result);
+        var list = (OkObjectResult)(await controller.List(null, null, null, null)).Result!;
+        Assert.Empty(Assert.IsAssignableFrom<IEnumerable<AppointmentResponseDto>>(list.Value));
+    }
+
+    [Fact]
+    public async Task Delete_UnknownId_ReturnsNotFound()
+    {
+        var controller = CreateController();
+
+        var result = await controller.Delete(999);
+
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
 }

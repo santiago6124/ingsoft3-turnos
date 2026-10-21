@@ -399,3 +399,12 @@ td {
   margin: -0.5rem 0 1.25rem;
   color: #5b6472;
 }
+
+.site-footer {
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #dde2e8;
+  color: #5b6472;
+  font-size: 0.9rem;
+  text-align: center;
+}

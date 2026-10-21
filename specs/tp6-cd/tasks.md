@@ -11,8 +11,8 @@
 - [x] **T9** Environment `production` con reviewer, sus hooks, job `deploy-prod`. ✔ Santiago **rechaza** con motivo (A6).
 - [x] **T10** Cambio visible en el front. ✔ Santiago **aprueba**, se ve en PROD (A6).
 - [x] **T11** `v6.0.0` sobre el commit de `production`. ✔ (A7).
-- [ ] **T12** Un cambio más a PROD y rollback a `v6.0.0` por hook. ✔ horas de *Deploys* anotadas (A8).
-- [ ] **T13** `decisiones.md` › TP6 con «Enlaces de este TP». ✔ Auto-Deploy off y los ids de los hooks revisados (A9).
+- [x] **T12** Un cambio más a PROD y rollback a `v6.0.0` por hook. ✔ horas de *Deploys* anotadas (A8).
+- [x] **T13** `decisiones.md` › TP6 con «Enlaces de este TP». ✔ Auto-Deploy off y los ids de los hooks revisados (A9).
 
 ## Desvíos respecto del plan
 
@@ -21,5 +21,6 @@
 - **T9/T10**: el deploy a QA de #37 dejó el front sirviendo el bundle anterior aunque Render lo marcó
   `live` con el commit nuevo (cache de build de Render). Por eso entró #38: el front graba su commit
   en `/version.txt` y el smoke lo exige. El cambio visible aprobado quedó en #38.
-- **T12**: el push del merge de #39 no disparó ninguna corrida de Actions (13:42 UTC del 21/10, sin
-  incidente informado). Este PR existe para volver a disparar el pipeline sobre `main`.
+- **T12**: el push del merge de #39 disparó su corrida con veinte minutos de demora, y el de #40
+  (que se había hecho para relanzarlo) no la disparó nunca. El rollback se hizo por la API de Render
+  con el commit de `v6.0.0`, no por el hook: los hooks son secrets y no se pueden volver a leer.

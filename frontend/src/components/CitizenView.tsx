@@ -60,6 +60,7 @@ export default function CitizenView() {
   return (
     <div className="services-menu">
       <h2>¿Qué trámite querés agendar?</h2>
+      <p className="services-menu-help">Elegí el trámite, después el día y el horario libre. Te confirmamos el turno en el momento.</p>
       <ul>
         {SERVICES.map((s) => (
           <li key={s.type} className="service-menu-item">

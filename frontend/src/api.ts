@@ -75,3 +75,7 @@ export function confirmAppointment(id: number, fetcher?: Fetcher): Promise<Appoi
 export function cancelAppointment(id: number, fetcher?: Fetcher): Promise<Appointment> {
   return request<Appointment>(`/turnos/${id}/cancelar`, { method: 'PUT' }, fetcher)
 }
+
+export function deleteAppointment(id: number, fetcher?: Fetcher): Promise<null> {
+  return request<null>(`/turnos/${id}`, { method: 'DELETE' }, fetcher)
+}

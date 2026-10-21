@@ -4,7 +4,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
   buildAppointmentsQuery, request, type Fetcher,
-  listAppointments, createAppointment, listAvailableSlots, confirmAppointment, cancelAppointment,
+  listAppointments, createAppointment, listAvailableSlots, confirmAppointment, cancelAppointment, deleteAppointment,
 } from './api'
 
 describe('buildAppointmentsQuery', () => {
@@ -75,6 +75,7 @@ describe('endpoints de la API', () => {
     ['horarios disponibles', (f: Fetcher) => listAvailableSlots('2026-10-22', 'Pasaporte', f), 'GET', '/api/available-slots?date=2026-10-22&serviceType=Pasaporte'],
     ['confirmar', (f: Fetcher) => confirmAppointment(7, f), 'PUT', '/api/turnos/7/confirmar'],
     ['cancelar', (f: Fetcher) => cancelAppointment(7, f), 'PUT', '/api/turnos/7/cancelar'],
+    ['eliminar', (f: Fetcher) => deleteAppointment(7, f), 'DELETE', '/api/turnos/7'],
   ])('%s usa %s %s', async (_accion, llamar, metodo, url) => {
     const fetcher = fakeFetch(200, {})
 

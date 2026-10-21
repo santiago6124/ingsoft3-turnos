@@ -171,4 +171,21 @@ public class AppointmentsController : ControllerBase
 
         return Ok(AppointmentResponseDto.FromEntity(appointment));
     }
+
+    // DELETE /turnos/{id}
+    // Borra el turno de verdad (cancelar lo deja en la base con estado Cancelled). Es para el
+    // admin, cuando un turno se cargó por error, y es lo que usan las pruebas contra QA para
+    // limpiar lo que crean (TP7).
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var appointment = await _db.Appointments.FindAsync(id);
+        if (appointment is null)
+            return NotFound(new ErrorResponseDto($"No appointment exists with id {id}."));
+
+        _db.Appointments.Remove(appointment);
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

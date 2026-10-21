@@ -68,7 +68,11 @@ export default function CitizenView() {
               <h3>{s.type}</h3>
               <p>{s.description}</p>
             </div>
-            <button type="button" onClick={() => setStep({ type: 'form', serviceType: s.type })}>
+            <button
+              type="button"
+              onClick={() => setStep({ type: 'form', serviceType: s.type })}
+              aria-label={`Agendar ${s.type}`}
+            >
               Agendar
             </button>
           </li>

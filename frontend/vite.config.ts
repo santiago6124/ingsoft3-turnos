@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -17,7 +18,8 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.ts',
     // El build de producción no debe mirar los tests.
-    exclude: ['node_modules/**', 'dist/**'],
+    // e2e/ es de Playwright (TP7): vitest no la toca, o explota con sus specs.
+    exclude: [...configDefaults.exclude, 'dist/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       // json-summary: the totals file the pipeline turns into the table of the run's Summary.

@@ -77,6 +77,7 @@ jobs:
           # Sólo un push a main publica. Un PR construye y verifica, pero no sube nada.
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ghcr.io/santiago6124/ingsoft3-turnos-backend:sha-${{ github.sha }}
+          build-args: GIT_COMMIT=${{ github.sha }}   # /health lo devuelve: prueba qué imagen corre
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 

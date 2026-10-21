@@ -32,6 +32,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 LABEL org.opencontainers.image.source=https://github.com/santiago6124/ingsoft3-turnos
 WORKDIR /app
 COPY --from=build /app/publish .
+# El commit del que salió esta imagen (lo pasa el pipeline como build arg). /health lo devuelve:
+# es la forma de comprobar desde afuera que un entorno corre ESTA imagen (TP7). Va abajo de todo,
+# para que un commit nuevo no invalide el cache de las capas pesadas.
+ARG GIT_COMMIT
+ENV GIT_COMMIT=${GIT_COMMIT}
 # La imagen aspnet:8.0 escucha en 8080 por defecto.
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Turnos.Api.dll"]

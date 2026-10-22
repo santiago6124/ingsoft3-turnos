@@ -156,7 +156,7 @@ export default function AppointmentForm({ serviceType, onCreated }: AppointmentF
       {error && <p className="error" role="alert">{error}</p>}
 
       <button type="submit" className="form-submit-button" disabled={loading}>
-        {loading ? 'Agendando...' : 'Agendar turno'}
+        {loading ? 'Reservando...' : 'Reservar turno'}
       </button>
     </form>
   )

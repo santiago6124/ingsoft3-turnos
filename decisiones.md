@@ -1410,3 +1410,34 @@ Cómo lo verifiqué:
 - **Que QA y PROD corren lo mismo** se comprobó con los digests que Render registra en cada deploy,
   no con el color de los checks.
 
+## TP8 — Infraestructura como código: `preprod`
+
+**Riel y versiones.** Terraform **1.17.0** (instalado del tap oficial de HashiCorp) contra las dos
+cuentas del TP6: `kislerdm/neon` **0.18.0** y `render-oss/render` **1.9.1**, fijadas en `main.tf` y
+con sus hashes en el `.terraform.lock.hcl`, que sí está commiteado. `preprod` es un entorno nuevo: un
+proyecto de Neon propio, en `aws-us-east-1`, y dos servicios de Render en Virginia que corren la imagen
+de `v7.0.0`. QA y PROD no están declarados y no se tocaron. La cadena de conexión se arma con lo que
+devuelve Neon, y el `BACKEND_URL` del front sale del `url` de su api. Cómo crearlo en vivo está en
+[`infra/README.md`](infra/README.md). Medido el 22/10: el `apply` tarda alrededor de 50 segundos y
+termina con los servicios `live` (`wait_for_deploy_completion`), y el `destroy` tarda 8 segundos. Las
+dos suites del TP7 corridas contra preprod dieron 7 de 7.
+
+**Problemas.** (1) `brew install terraform` no anda: Homebrew sacó la fórmula después del cambio de
+licencia; se instala con `brew tap hashicorp/tap`. (2) El primer `apply` falló con `org_id is
+required`: desde este año la API de Neon exige la organización para crear proyectos, y la guía no
+lo menciona. El provider tiene el atributo `org_id`, y va como variable con default porque no es un
+secreto. (3) Lo que la cátedra no midió y yo sí: al recrear, Render devolvió **las mismas URLs**, sin
+sufijo; lo que cambió fue el host de la base (proyecto nuevo de Neon), y la api lo encontró sola
+porque la cadena se deriva. (4) `prevent_destroy` en la base frenó el `destroy` **entero**, no sólo
+la base: no se destruyó nada. Lo saqué después de probarlo, porque preprod tiene que poder morir.
+(5) **Lo que sigue siendo artesanal en mi cuenta**: QA y PROD (creados por API en el TP6 y pasados a
+imagen en el TP7), sus deploy hooks copiados del panel, los environments y secrets de GitHub, y el
+proyecto «Ingedesoft» de Neon. El plan no los ve, y que diga «No changes» no dice nada de ellos.
+
+**IA.** Lo hice con Claude Code (Claude Opus 5.5), con la IA escribiendo el HCL y operando
+`terraform` bajo mi indicación. Lo verificamos leyendo cada plan antes de aplicarlo (`3 to add`,
+`2 to add`, `5 to destroy`); con la segunda pasada en «No changes»; con el drift provocado a mano
+(base borrada → `1 to add` → reparada) y la base intrusa que el plan no vio; contando las contraseñas
+en texto plano dentro del estado sin imprimirlas; con `git add -n` antes de commitear para ver que el
+estado no entraba; y comprobando QA y PROD después de cada `apply` y cada `destroy`.
+

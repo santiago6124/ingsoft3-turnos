@@ -1298,10 +1298,15 @@ en `1fb3bf1` y ningún ciudadano se encontró con un formulario que no le dejaba
 otros trámites), lo que sólo pasa con datos o tráfico de producción, el rendimiento, y lo que se ve
 mal pero funciona (un botón ilegible pasa la e2e si conserva su nombre).
 
-**Una línea que sólo atraparía la integración**: en el `DbContext`, cambiar el filtro del índice
-único a `"Status" = 'Pending'`. Compila, los unit tests usan InMemory (que no aplica índices) y siguen
-verdes, y la e2e no prueba la doble reserva. La integración se pone roja: el segundo alta en un
-horario confirmado ya no da `409`.
+**Una línea que la integración atrapa y los unit tests no, probada el 22/10.** En el alta, cambiar
+`CreatedAt = DateTime.UtcNow` por `DateTime.Now` («quería la hora de acá»). Compila, y **los 39 unit
+tests pasan**: usan InMemory, que no tiene tipos de columna. Contra el compose, la integración dio
+**rojo en los dos altas** (`Expected: 201 · Received: 500`), y el log de la API dice por qué: *«Cannot
+write DateTime with Kind=Local to PostgreSQL type 'timestamp with time zone', only UTC is supported»*.
+Es el driver de Postgres rechazando la fecha, algo que un doble no puede ver. Volví el cambio atrás.
+(Primero había pensado en cambiar el filtro del índice único, y no sirve: el controller verifica la
+doble reserva **antes** de guardar, así que la API contesta `409` con o sin índice. El índice sólo
+ataja la carrera de dos confirmaciones simultáneas, el `catch` del TP5.)
 
 ### 6. Por qué integración amplia (contra QA) y no estrecha
 

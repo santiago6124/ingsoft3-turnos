@@ -92,10 +92,6 @@ app.MapMethods("/health", new[] { "GET", "HEAD" }, async (AppointmentsDbContext 
             statusCode: StatusCodes.Status503ServiceUnavailable);
 });
 
-// TEMPORAL (TP9): un error a propósito, para verlo llegar a Sentry desde PROD. Se saca en el PR
-// que cierra el TP9.
-app.MapGet("/api/falla", string () => throw new InvalidOperationException("Falla de prueba del TP9"));
-
 // Applies pending migrations at startup. Needed in Docker, where there's no
 // interactive terminal to run "dotnet ef database update" by hand. Safe to
 // always run: if there are no pending migrations, it does nothing.

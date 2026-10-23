@@ -51,7 +51,7 @@ jobs:
           cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
       - name: Publicar coverage y resultados
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: coverage-backend
@@ -130,7 +130,7 @@ jobs:
           " >> $GITHUB_STEP_SUMMARY
 
       - name: Publicar el coverage del frontend
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: coverage-frontend
@@ -237,7 +237,7 @@ jobs:
       # El único !cancelled() de este tramo de la cadena, junto con el de e2e: publicar el
       # reporte también cuando falló, que es cuando más importa.
       - name: Publicar reporte de integración
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-integracion
@@ -276,7 +276,7 @@ jobs:
         working-directory: ./frontend
 
       - name: Publicar reporte e2e
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-e2e

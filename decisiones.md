@@ -1441,3 +1441,94 @@ proyecto «Ingedesoft» de Neon. El plan no los ve, y que diga «No changes» no
 en texto plano dentro del estado sin imprimirlas; con `git add -n` antes de commitear para ver que el
 estado no entraba; y comprobando QA y PROD después de cada `apply` y cada `destroy`.
 
+
+## TP9 — DevSecOps y observabilidad
+
+| | Enlace |
+|---|---|
+| Spec | [`specs/tp9-devsecops/`](specs/tp9-devsecops/) |
+| Seguridad | [*Security*](https://github.com/santiago6124/ingsoft3-turnos/security): alertas de Dependabot, CodeQL y secret scanning |
+| Los 4 hallazgos de CodeQL, cerrados | [code scanning, cerrados](https://github.com/santiago6124/ingsoft3-turnos/security/code-scanning?query=is%3Aclosed) · arreglo en [PR #49](https://github.com/santiago6124/ingsoft3-turnos/pull/49) |
+| PR de Dependabot mergeado | [#66, undici 7.29.0 → 7.30.1](https://github.com/santiago6124/ingsoft3-turnos/pull/66) · [su corrida hasta PROD](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/40013170001) |
+| Sentry y `/health` con HEAD a PROD | [PR #49](https://github.com/santiago6124/ingsoft3-turnos/pull/49) · [corrida aprobada](https://github.com/santiago6124/ingsoft3-turnos/actions/runs/40008034141) |
+| La tarjeta | [#70](https://github.com/santiago6124/ingsoft3-turnos/issues/70), en el tablero «IngSoft3 - Turnos DevOps» |
+
+El monitor (UptimeRobot) y Sentry (org `ucc-yj`, proyectos `turnos-backend` y `turnos-frontend`) no
+son públicos: los muestro en vivo en la defensa. Los dos guardan 30 días, desde el 23/10.
+
+**El PR de Dependabot.** Dependabot abrió 15 PRs semanales, del #50 al #64, y casi todos eran
+saltos **major**: Npgsql y EF Core de 8 a 9, vitest de 2 a 5, React 19, TypeScript 7, y las actions.
+Varios ya fallaban en el CI del propio PR. Después, al prender las *security updates*, llegaron cinco
+más, del #65 al #69, por 27 alertas, todas del front. Mergeé el **#66: undici de 7.29.0 a 7.30.1**.
+- Es **minor**, y las notas de la versión son sólo arreglos de seguridad, sin cambios incompatibles.
+- Toca **3 líneas del `package-lock.json`** y nada más.
+- Cierra 6 alertas, una de ellas alta (validación de certificados TLS).
+- undici entra por `jsdom`, el navegador simulado de mis tests del front. Por eso el `build-frontend`
+  verde no era un trámite: corrió los 37 tests y el umbral del 90 % justo con la versión nueva.
+- Después pasó por la cadena entera del TP7: QA, integración, e2e y la aprobación de PROD.
+
+Los majors no los mergeé a ciegas. EF Core 9 y Npgsql 9 tienen que subir juntos (el #61 solo ya
+falla), y vitest 5 o React 19 son una migración, no una actualización. Un detalle que importa para
+leer las alertas: las 27 son de herramientas de **desarrollo y build** (vite, vitest, undici,
+postcss, tinypool). Ninguna llega a PROD, que sirve el bundle con nginx. Igual corren en mi máquina
+y en el CI con acceso al código, así que no las ignoro.
+
+**El monitor, y lo que mide Sentry.** Antes de crear el monitor, `curl -I` contra el `/health` de
+PROD devolvió **405** (`allow: GET`). UptimeRobot gratis pregunta con HEAD, así que habría marcado
+caída con PROD viva. El arreglo (`MapMethods` con GET y HEAD) llegó a PROD por el pipeline, y recién
+ahí creé el monitor. La caída provocada, el 23/10:
+
+| Hora | Qué pasó |
+|---|---|
+| 16:14:23 | *Suspend* de la api de PROD en Render |
+| 16:19:21 | **DOWN** (503) en el monitor y en mi mail: **4 min 58 s** después |
+| 16:19:38 | *Resume*; a las 16:20:02 `/health` vuelve a contestar `ok` |
+| 16:24:24 | **UP** en el monitor y en mi mail: **4 min 22 s** después de que PROD volviera |
+
+Los dos retrasos son el intervalo de 5 minutos del plan gratuito. Sin el monitor me habría enterado
+cuando alguien me avisara. Después lo **pausé**: cada 5 minutos mantiene PROD despierta y se come las
+750 horas que comparten mis servicios de Render.
+
+En Sentry:
+- **El error**: `TURNOS-BACKEND-1`, del `/api/falla` temporal, con release `51c3d5b`. El commit
+  entra como release, así que cada error dice qué versión lo produjo.
+- **La operación más usada**: `GET /api/turnos`, el listado, con 81 pedidos, P50 de 5 ms y P95 de 137 ms.
+- **La más lenta**: `GET /api/available-slots`, con P95 de **1.620 ms** y P50 de 5 ms.
+
+Esa diferencia la explica la traza. El primer pedido después de un arranque tardó 2.255 ms:
+1.005 ms en que EF Core compiló la consulta LINQ por primera vez en ese proceso, 391 ms en abrir la
+conexión con Neon, y 95 ms la consulta en sí. El siguiente tardó 15 ms. Con eso abrí la tarjeta #70:
+ejecutar esas consultas al arrancar, y medir el mismo P95 antes y después. Aclaración: parte del uso
+medido son tres corridas de las suites del TP7 contra PROD (crean y borran sus turnos), además de
+unos minutos de uso a mano. El reparto entre operaciones se parece al de un uso real, pero los
+volúmenes no.
+
+**Problemas.**
+1. El 405 a HEAD: lo encontré antes de que me lo encontrara el monitor.
+2. CodeQL encontró **4 hallazgos reales** en mi pipeline, todos `actions/missing-workflow-permissions`
+   (CWE-275, permisos; en OWASP, configuración insegura): `deploy-qa`, `integracion`, `e2e` y `deploy-prod` corrían con los
+   permisos por defecto del token. No eran explotables hoy, porque esos jobs no ejecutan código de
+   un PR ajeno y el default de mi repo es de lectura. Pero eso depende de un ajuste del repo que no
+   está en el código. Los arreglé declarando lo mínimo: `{}` en los deploys, que sólo hacen `curl` a
+   sus hooks, y `contents: read` en las suites, que sólo hacen checkout. Así no tuve que provocar
+   hallazgos de mentira.
+3. Para leer los números de Sentry por API hizo falta un token personal de **sólo lectura**. Los DSN
+   no alcanzan: sólo sirven para enviar. Por la misma razón, el DSN del front puede estar en un
+   repo público.
+
+**IA.** Lo hice con Claude Code (Claude Opus 5.5), con la IA operando `git`, `gh` y las APIs de
+GitHub, Render, UptimeRobot y Sentry bajo mi indicación. Escribió la spec, el `dependabot.yml`, los
+cambios del back y del front, los permisos del pipeline, la tarjeta y el borrador de esta sección.
+**Lo que hice yo**: las aprobaciones y rechazos del gate; confirmar que los mails de DOWN y UP
+llegaron; usar PROD a mano; crear el token de Sentry sin que pasara por el chat; y la decisión de
+qué PR de Dependabot mergear.
+
+Cómo lo verifiqué:
+- **HEAD y el endpoint de falla**: con el compose local antes de subir (HEAD → 200, falla → 500, la
+  app andando sin DSN y las 7 pruebas de Playwright en verde), y con `curl -I` contra QA y PROD
+  después.
+- **Que `SENTRY_DSN` no disparara un deploy**: lo miré en el último deploy de la api en Render.
+- **Que los hallazgos de CodeQL quedaran cerrados**: con su estado *fixed* en la API, no con el color
+  de los checks.
+- **Lo de Sentry**: con los números de su API, y bajando a la traza del pedido más lento antes de
+  escribir la tarjeta.

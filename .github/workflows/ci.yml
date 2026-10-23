@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Preparar el constructor que sabe cachear
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # ---- TP5: tests, coverage y umbral, en el mismo job (y el mismo required check) ----
       - name: Construir la etapa de tests
@@ -96,7 +96,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Preparar el constructor que sabe cachear
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # ---- TP5: tests, coverage y umbral, en el mismo job (y el mismo required check) ----
       - name: Construir la etapa de tests del frontend

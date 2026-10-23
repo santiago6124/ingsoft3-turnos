@@ -23,6 +23,26 @@ builder.Services.Configure<BusinessHoursOptions>(
 
 builder.Services.AddSingleton<IScheduleService, ScheduleService>();
 
+// Qué commit está corriendo. Lo devuelve /health y lo usa Sentry como release.
+//   GIT_COMMIT: grabado en la imagen al construirla en el pipeline (TP7). Viaja con la imagen, así
+//     que es la prueba de que el entorno ejecuta ESA imagen y no una reconstrucción.
+//   RENDER_GIT_COMMIT: lo define Render cuando construye desde el repo (TP6).
+//   "local": compose y tests.
+// Vacía cuenta como ausente: el Dockerfile define GIT_COMMIT siempre, y sin build arg queda "".
+var commit = new[] { "GIT_COMMIT", "RENDER_GIT_COMMIT" }
+    .Select(Environment.GetEnvironmentVariable)
+    .FirstOrDefault(v => !string.IsNullOrEmpty(v)) ?? "local";
+
+// Sentry (TP9): qué falla, qué tarda y qué se usa, contado por la app misma.
+// El DSN llega por el entorno y sólo existe en la api de PROD. Sin él (local, tests, QA) la librería
+// queda apagada y la app anda igual. La release es el commit: cada error dice qué versión lo produjo.
+builder.WebHost.UseSentry(o =>
+{
+    o.Dsn = builder.Configuration["SENTRY_DSN"] ?? "";
+    o.Release = commit;
+    o.TracesSampleRate = 1.0; // medir todos los pedidos: el tráfico es poco y el plan gratis sobra
+});
+
 // CORS: allow the frontend's origin (Vite on localhost:5173 by default)
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? new[] { "http://localhost:5173" };
@@ -56,18 +76,12 @@ app.MapControllers();
 // ese estado es peor que no tener health check — un orquestador lo lee como "sano" y
 // le sigue mandando tráfico.
 //
-// También dice QUÉ commit está corriendo. El smoke test del pipeline lo compara con el commit que
-// verificó, y así prueba desde afuera qué imagen corre el entorno.
-//   GIT_COMMIT: grabado en la imagen al construirla en el pipeline (TP7). Viaja con la imagen, así
-//     que es la prueba de que el entorno ejecuta ESA imagen y no una reconstrucción.
-//   RENDER_GIT_COMMIT: lo define Render cuando construye desde el repo (TP6).
-//   "local": compose y tests.
-// Vacía cuenta como ausente: el Dockerfile define GIT_COMMIT siempre, y sin build arg queda "".
-var commit = new[] { "GIT_COMMIT", "RENDER_GIT_COMMIT" }
-    .Select(Environment.GetEnvironmentVariable)
-    .FirstOrDefault(v => !string.IsNullOrEmpty(v)) ?? "local";
-
-app.MapGet("/health", async (AppointmentsDbContext db) =>
+// También dice QUÉ commit está corriendo (ver `commit`, arriba). El smoke test del pipeline lo
+// compara con el commit que verificó, y así prueba desde afuera qué imagen corre el entorno.
+//
+// Acepta GET y HEAD: el monitor gratuito de UptimeRobot (TP9) pregunta con HEAD, y con sólo GET
+// PROD contestaba 405 y el monitor la habría dado por caída estando viva.
+app.MapMethods("/health", new[] { "GET", "HEAD" }, async (AppointmentsDbContext db) =>
 {
     var baseAlcanzable = await db.Database.CanConnectAsync();
 
@@ -77,6 +91,10 @@ app.MapGet("/health", async (AppointmentsDbContext db) =>
             new { status = "degraded", database = "unreachable", commit },
             statusCode: StatusCodes.Status503ServiceUnavailable);
 });
+
+// TEMPORAL (TP9): un error a propósito, para verlo llegar a Sentry desde PROD. Se saca en el PR
+// que cierra el TP9.
+app.MapGet("/api/falla", string () => throw new InvalidOperationException("Falla de prueba del TP9"));
 
 // Applies pending migrations at startup. Needed in Docker, where there's no
 // interactive terminal to run "dotnet ef database update" by hand. Safe to

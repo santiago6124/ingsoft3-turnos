@@ -1,0 +1,19 @@
+# Dependabot (TP9): tres ecosistemas, porque los tres son código de terceros que corre con mis permisos.
+# Lee esta config desde main. Una vez por semana propone versiones nuevas. Además, con «security
+# updates» prendido en Settings, abre un PR apenas se publica una falla en algo que uso.
+version: 2
+updates:
+  - package-ecosystem: "nuget"           # el back: no escanea subcarpetas, así que apunto a donde
+    directory: "/backend"                # está Turnos.sln, que arrastra a sus dos proyectos
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "npm"             # el front: package.json y su lockfile
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"  # las actions del pipeline: corren con el token del repo
+    directory: "/"
+    schedule:
+      interval: "weekly"

@@ -26,7 +26,7 @@ jobs:
 
       # ---- TP5: tests, coverage y umbral, en el mismo job (y el mismo required check) ----
       - name: Construir la etapa de tests
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           target: test                # se detiene en la etapa de tests, no llega a final
@@ -71,7 +71,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}   # el token de esta corrida: vive lo que dura el job
 
       - name: Construir y publicar la imagen del backend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend          # ahí está el Dockerfile del TP2
           # Sólo un push a main publica. Un PR construye y verifica, pero no sube nada.
@@ -100,7 +100,7 @@ jobs:
 
       # ---- TP5: tests, coverage y umbral, en el mismo job (y el mismo required check) ----
       - name: Construir la etapa de tests del frontend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           target: test
@@ -148,7 +148,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}   # el token de esta corrida: vive lo que dura el job
 
       - name: Construir y publicar la imagen del frontend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           # Sólo un push a main publica. Un PR construye y verifica, pero no sube nada.

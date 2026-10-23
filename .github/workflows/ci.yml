@@ -164,6 +164,7 @@ jobs:
     needs: [build-backend, build-frontend]     # sin los dos jobs en verde no hay deploy
     if: github.ref == 'refs/heads/main'        # los PRs verifican; sólo main despliega
     environment: qa                            # trae los hooks de QA y deja registro en Deployments
+    permissions: {}                            # TP9 (CodeQL): sólo curl a los hooks, no necesita el token
     steps:
       # TP7: Render ya no construye nada. El hook le dice QUÉ IMAGEN ejecutar: la que publicaron
       # los jobs de build de ESTA corrida, por su etiqueta sha-<commit> completa. (Antes iba
@@ -211,6 +212,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-qa
     timeout-minutes: 15
+    permissions:
+      contents: read        # TP9 (CodeQL): el checkout, y nada más
     steps:
       - uses: actions/checkout@v4
 
@@ -247,6 +250,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: integracion
     timeout-minutes: 20
+    permissions:
+      contents: read        # TP9 (CodeQL): el checkout, y nada más
     steps:
       - uses: actions/checkout@v4
 
@@ -286,7 +291,8 @@ jobs:
                                                 # `if` de la rama: lo hereda por la cadena.
     environment: production                     # ⏸ acá la corrida se PAUSA hasta que alguien aprueba;
                                                 # y sólo un job aprobado puede leer los hooks de PROD
-    concurrency:                                # nunca dos deploys a PROD pisándose. (No ordena la
+    permissions: {}                             # TP9 (CodeQL): sólo curl a los hooks, no necesita el token
+    concurrency:                               # nunca dos deploys a PROD pisándose. (No ordena la
       group: deploy-prod                        # cola de aprobaciones: una corrida vieja aprobada
       cancel-in-progress: false                 # después de una nueva haría retroceder PROD.)
     steps:
